@@ -219,7 +219,7 @@ ggplot(mortB23, aes(x = TrtDay,
   geom_point() +
   labs(x = "Hours",
        y = "Percent Survival",
-       title = "Percent Survival Post-Exposure") +
+       title = "Percent Survival Post-Exposure, B2-B3") +
   ylim(0, 1) +
   scale_shape_manual(name = "Population",
                      labels = c("Northern", "Southern"),
