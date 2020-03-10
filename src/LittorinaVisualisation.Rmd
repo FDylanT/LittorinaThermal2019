@@ -1,0 +1,308 @@
+---
+title: "LittorinaVisualisation"
+author: "Ffion Titmuss"
+date: "3/6/2020"
+output: html_document
+---
+
+setwd("~/Desktop/Repos/LittorinaThermal2019")
+
+# Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Load data
+```{r}
+litt <- read.csv("../data/LittorinaData.csv")
+resp <- read.csv("../data/RespirationData.csv")
+```
+
+# Filter dataset
+```{r}
+mortData_all <- litt %>%
+  rename(Spp = Genus_Species) %>%
+  mutate(Spp = recode(Spp,
+                      littorina_littorea = "LL",
+                      littorina_obtusata = "LO",
+                      littorina_saxatilis = "LS")) %>%
+  mutate(SampleID = as.character(SampleID)) %>%
+  mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS")))
+
+mortData <- mortData_all %>%
+  filter(PreTrtMortNotes == "")
+```
+
+# Plot weight variation
+```{r}
+ggplot(data = mortData, aes(x = Spp,
+                            y = WetWeight,
+                            colour = Spp,
+                            linetype = PopID)) +
+  geom_boxplot() +
+  labs(x = "Species",
+       y = "Wet Weight (g)",
+       title = "Size Distribution of Samples") +
+  scale_y_continuous(breaks = seq(0, 3, by = 0.5)) +
+  scale_x_discrete(labels = c("L. littorea",
+                              "L. obtusata",
+                              "L. saxatilis")) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  guides(colour = FALSE) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        axis.title.x = element_text(face = "italic"))
+```
+
+# Plot B1 mortality
+```{r}
+mortB1 <- mortData %>%
+  filter(Block == 1) %>%
+  rename("24" = TrtDay1_Survived,
+         "48" = Day2_Survived,
+         "51" = TrtDay3_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", "51", key = "TrtDay", value = "Survived") %>%
+  mutate(TrtDay = as.integer(TrtDay)) %>%
+  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
+  group_by(Spp, PopID, Trt, TrtDay) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
+  mutate(Percent_Surv = Surv/Tot)
+
+ggplot(mortB1, aes(x = TrtDay,
+                   y = Percent_Surv,
+                   group = interaction(PopID, Trt),
+                   shape = PopID,
+                   linetype = PopID,
+                   colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Hours",
+       y = "Percent Survival",
+       title = "Block 1 Mortality") +
+  scale_x_continuous(breaks = seq(0, 51, by = 25)) +
+  ylim(0, 1) +
+  scale_shape_manual(name = "Population",
+                     labels = c("Northern", "Southern"),
+                     values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment",
+                      labels = c("50C, 45C", "19C, 19C", "0C, 0C"),
+                      values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1),
+         linetype = guide_legend(order = 1)) +
+  facet_wrap( ~ Spp,
+              labeller = labeller(Spp = c(LL = "L. littorea",
+                                          LO = "L. obtusata",
+                                          LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
+
+# Plot B2 mortality
+```{r}
+mortB2 <- mortData %>%
+  filter(Block == 2) %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", key = "TrtDay", value = "Survived") %>%
+  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
+  group_by(Block, Spp, PopID, Trt, TrtDay) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
+  mutate(Percent_Surv = Surv/Tot)
+
+ggplot(mortB2, aes(x = TrtDay,
+                   y = Percent_Surv,
+                   group = interaction(PopID, Trt),
+                   shape = PopID,
+                   linetype = PopID,
+                   colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Days of Treatment",
+       y = "Percent Survival",
+       title = "Block 2 Mortality") +
+  ylim(0, 1) +
+  scale_shape_manual(name = "Population",
+                     labels = c("Northern", "Southern"),
+                     values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment",
+                      labels = c("47C, 44C", "20C, 19C", "-13C, -12C"),
+                      values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1),
+         linetype = guide_legend(order = 1)) +
+  facet_wrap( ~ Spp,
+              labeller = labeller(Spp = c(LL = "L. littorea",
+                                          LO = "L. obtusata",
+                                          LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
+
+# Plot B3 mortality
+```{r}
+mortB3 <- mortData %>%
+  filter(Block == 3) %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", key = "TrtDay", value = "Survived") %>%
+  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
+  group_by(Block, Spp, PopID, Trt, TrtDay) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
+  mutate(Percent_Surv = Surv/Tot)
+
+ggplot(mortB3, aes(x = TrtDay,
+                   y = Percent_Surv,
+                   group = interaction(PopID, Trt),
+                   shape = PopID,
+                   linetype = PopID,
+                   colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Days of Treatment",
+       y = "Percent Survival",
+       title = "Block 3 Mortality") +
+  ylim(0, 1) +
+  scale_shape_manual(name = "Population",
+                     labels = c("Northern", "Southern"),
+                     values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment",
+                      labels = c("42C, 46C", "21C, 20C", "-12C, -12C"),
+                      values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1),
+         linetype = guide_legend(order = 1)) +
+  facet_wrap( ~ Spp,
+              labeller = labeller(Spp = c(LL = "L. littorea",
+                                          LO = "L. obtusata",
+                                          LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
+
+# Plot B2-3 combined mortality
+```{r}
+mortB23 <- mortData %>%
+  filter(Block == 2 | Block == 3) %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", key = "TrtDay", value = "Survived") %>%
+  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
+  group_by(Spp, PopID, Trt, TrtDay) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
+  mutate(Percent_Surv = Surv/Tot)
+
+ggplot(mortB23, aes(x = TrtDay,
+                    y = Percent_Surv,
+                    group = interaction(PopID, Trt),
+                    shape = PopID,
+                    linetype = PopID,
+                    colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Hours",
+       y = "Percent Survival",
+       title = "Percent Survival Post-Exposure") +
+  ylim(0, 1) +
+  scale_shape_manual(name = "Population",
+                     labels = c("Northern", "Southern"),
+                     values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment",
+                      labels = c("Heat", "Ambient", "Cold"),
+                      values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1),
+         linetype = guide_legend(order = 1)) +
+  facet_wrap( ~ Spp,
+              labeller = labeller(Spp = c(LL = "L. littorea",
+                                          LO = "L. obtusata",
+                                          LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
+
+# Plot respiration/weight variation
+```{r}
+respData <- resp %>%
+  filter(!is.na(Block)) %>%
+  rename(MaxRate = MaxRespRate_umolO2.hr) %>%
+  mutate(Spp = as.factor(str_extract(SampleID, "L[LOS]"))) %>%
+  mutate(SampleN = as.integer(as.character(SampleN))) %>%
+  mutate(SampleID = as.character(SampleID))
+
+mort_resp_all <- right_join(mortData_all, respData) %>%
+  mutate(RespPerG = MaxRate / WetWeight)
+
+ggplot(mort_resp_all, aes(x = Spp,
+                          y = RespPerG,
+                          colour = Spp,
+                          linetype = PopID)) +
+  geom_boxplot() +
+  labs(x = "Species",
+       y = "Respiration (umol O2 / hr / g Wet Weight)",
+       title = "Respiration Rate Distribution of Block 3 Samples") +
+  scale_x_discrete(labels = c("L. littorea",
+                              "L. obtusata",
+                              "L. saxatilis")) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  guides(colour = FALSE) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(face = "italic"))
+```
+
+# Plot mortality with respect to respiration
+```{r}
+mort_resp <- mort_resp_all %>%
+  filter(PreTrtMortNotes == "" | PreTrtMortNotes == "wrong spp, orig.
+         labeled littorina_saxatilis") %>%
+  mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS")))
+
+ggplot(mort_resp, aes(x = TrtDay2_Survived,
+                      y = RespPerG,
+                      colour = Trt,
+                      linetype = PopID)) +
+  geom_boxplot(position = position_dodge2(preserve = "single")) +
+  labs(x = "Post-Exposure Survival",
+       y = "Respiration (umol O2 / hr / g wet weight)",
+       title = "Block 3 Samples") +
+  scale_x_discrete(limits = c(TRUE, FALSE), labels = c("Alive", "Dead")) +
+  scale_linetype_discrete(name = "Population",
+                          labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment",
+                      labels = c("42C, 46C", "21C, 20C", "-12C, -12C"),
+                      values = c("orangered", "black", "dodgerblue")) +
+  facet_wrap( ~ Spp,
+              labeller = labeller(Spp = c(LL = "L. littorea",
+                                          LO = "L. obtusata",
+                                          LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
