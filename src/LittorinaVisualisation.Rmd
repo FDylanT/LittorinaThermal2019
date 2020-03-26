@@ -5,7 +5,7 @@ date: "3/6/2020"
 output: html_document
 ---
 
-setwd("~/Desktop/Repos/LittorinaThermal2019")
+setwd("~/Repos/LittorinaThermal2019")
 
 # Load packages
 ```{r setup, include=FALSE}
@@ -17,10 +17,7 @@ library(tidyverse)
 ```{r}
 litt <- read.csv("../data/LittorinaData.csv")
 resp <- read.csv("../data/RespirationData.csv")
-```
 
-# Filter dataset
-```{r}
 mortData_all <- litt %>%
   rename(Spp = Genus_Species) %>%
   mutate(Spp = recode(Spp,
@@ -66,14 +63,15 @@ mortB1 <- mortData %>%
          "48" = Day2_Survived,
          "51" = TrtDay3_Survived) %>%
   mutate("0" = TRUE) %>%
-  gather("0", "24", "48", "51", key = "TrtDay", value = "Survived") %>%
-  mutate(TrtDay = as.integer(TrtDay)) %>%
-  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
-  group_by(Spp, PopID, Trt, TrtDay) %>%
+  gather("0", "24", "48", "51", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  group_by(Spp, PopID, Trt, Time_hrs) %>%
   summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
   mutate(Percent_Surv = Surv/Tot)
 
-ggplot(mortB1, aes(x = TrtDay,
+ggplot(mortB1, aes(x = Time_hrs,
                    y = Percent_Surv,
                    group = interaction(PopID, Trt),
                    shape = PopID,
@@ -113,13 +111,15 @@ mortB2 <- mortData %>%
   filter(Block == 2) %>%
   rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
   mutate("0" = TRUE) %>%
-  gather("0", "24", "48", key = "TrtDay", value = "Survived") %>%
-  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
-  group_by(Block, Spp, PopID, Trt, TrtDay) %>%
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  group_by(Block, Spp, PopID, Trt, Time_hrs) %>%
   summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
   mutate(Percent_Surv = Surv/Tot)
 
-ggplot(mortB2, aes(x = TrtDay,
+ggplot(mortB2, aes(x = Time_hrs,
                    y = Percent_Surv,
                    group = interaction(PopID, Trt),
                    shape = PopID,
@@ -158,13 +158,15 @@ mortB3 <- mortData %>%
   filter(Block == 3) %>%
   rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
   mutate("0" = TRUE) %>%
-  gather("0", "24", "48", key = "TrtDay", value = "Survived") %>%
-  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
-  group_by(Block, Spp, PopID, Trt, TrtDay) %>%
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  group_by(Block, Spp, PopID, Trt, Time_hrs) %>%
   summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
   mutate(Percent_Surv = Surv/Tot)
 
-ggplot(mortB3, aes(x = TrtDay,
+ggplot(mortB3, aes(x = Time_hrs,
                    y = Percent_Surv,
                    group = interaction(PopID, Trt),
                    shape = PopID,
@@ -203,13 +205,15 @@ mortB23 <- mortData %>%
   filter(Block == 2 | Block == 3) %>%
   rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
   mutate("0" = TRUE) %>%
-  gather("0", "24", "48", key = "TrtDay", value = "Survived") %>%
-  mutate(Surv_Int = as.integer(Survived), Tot_Int = 1) %>%
-  group_by(Spp, PopID, Trt, TrtDay) %>%
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  group_by(Spp, PopID, Trt, Time_hrs) %>%
   summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int)) %>%
   mutate(Percent_Surv = Surv/Tot)
 
-ggplot(mortB23, aes(x = TrtDay,
+ggplot(mortB23, aes(x = Time_hrs,
                     y = Percent_Surv,
                     group = interaction(PopID, Trt),
                     shape = PopID,
@@ -219,15 +223,16 @@ ggplot(mortB23, aes(x = TrtDay,
   geom_point() +
   labs(x = "Hours",
        y = "Percent Survival",
-       title = "Percent Survival Post-Exposure, B2-B3") +
+       title = "Post-Exposure Survival") +
   ylim(0, 1) +
+  scale_x_continuous(breaks = c(0, 24, 48)) +
   scale_shape_manual(name = "Population",
                      labels = c("Northern", "Southern"),
                      values = c(19, 1)) +
   scale_linetype_discrete(name = "Population",
                           labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Treatment",
-                      labels = c("Heat", "Ambient", "Cold"),
+                      labels = c("45C", "20C", "-12C"),
                       values = c("orangered", "black", "dodgerblue")) +
   guides(shape = guide_legend(order = 1),
          linetype = guide_legend(order = 1)) +
@@ -260,7 +265,7 @@ ggplot(mort_resp_all, aes(x = Spp,
                           linetype = PopID)) +
   geom_boxplot() +
   labs(x = "Species",
-       y = "Respiration (umol O2 / hr / g Wet Weight)",
+       y = "Respiration (umol O2 / hr / g wet weight)",
        title = "Respiration Rate Distribution of Block 3 Samples") +
   scale_x_discrete(labels = c("L. littorea",
                               "L. obtusata",

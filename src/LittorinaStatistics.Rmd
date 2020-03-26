@@ -1,0 +1,86 @@
+---
+title: "LittorinaStatistics"
+author: "Ffion Titmuss"
+date: "3/24/2020"
+output: html_document
+---
+
+setwd("~/Repos/LittorinaThermal2019")
+
+# Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lme4)
+library(blme)
+```
+
+# Load data
+```{r}
+litt <- read.csv("../data/LittorinaData.csv") %>%
+  rename(Spp = Genus_Species)
+
+mort_B23 <- litt %>%
+  filter(PreTrtMortNotes == "") %>%
+    # remove larvae that died during acclimation or were misidentified
+  filter(Block == 2 | Block == 3) %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+    # convert trt days to hours
+  mutate("0" = TRUE) %>%
+    # add time point 0 where all samples were alive
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+    # transform wide data to long data
+  mutate(Alive = as.integer(Survived)) %>%
+    # convert T/F to 1/0
+  mutate(Dead = ifelse(Alive == 1, 0, 1))
+```
+
+# Tests on mortality
+```{r}
+#mort1 <- glmer(cbind(Alive, Dead) ~ Spp * PopID * Trt * Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
+#               family = binomial(),
+#               data = mort_B23)
+
+#mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
+#               family = binomial(),
+#               data = mort_B23,
+#               control = glmerControl(optimizer = "bobyqa"))
+
+#mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable),
+#               family = binomial(),
+#               data = mort_B23,
+#               control = glmerControl(optimizer = "bobyqa"))
+
+#mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block),
+#               family = binomial(),
+#               data = mort_B23,
+#               control = glmerControl(optimizer = "bobyqa"))
+
+#mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID:Seatable),
+#               family = binomial(),
+#               data = mort_B23,
+#               control = glmerControl(optimizer = "bobyqa"))
+
+#mort1 <- bglmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
+#               family = binomial(),
+#               data = mort_B23)
+
+#mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
+#               family = binomial(),
+#               data = mort_B23,
+#               control = glmerControl(optimizer = "bobyqa",
+#                                       optCtrl = list(maxfun = 10000),
+#                                       tol = 0.001))
+
+mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|SampleID),
+               family = binomial(),
+               data = mort_B23,
+               control = glmerControl(optimizer = "bobyqa",
+                                       optCtrl = list(maxfun = 10000),
+                                       tol = 0.001))
+
+
+
+
+# summary(mort1)
+```
