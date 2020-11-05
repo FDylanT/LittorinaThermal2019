@@ -3,20 +3,22 @@ title: "LittorinaVisualisation"
 author: "Ffion Titmuss"
 date: "3/6/2020"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 setwd("~/Repos/LittorinaThermal2019")
 
-# Load packages
+## Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-# Load data
+## Load data
 ```{r}
-litt <- read.csv("../data/LittorinaData.csv")
-resp <- read.csv("../data/RespirationData.csv")
+litt <- read.csv("./data/LittorinaData.csv")
+resp <- read.csv("./data/RespirationData.csv")
 
 mortData_all <- litt %>%
   rename(Spp = Genus_Species) %>%
@@ -31,31 +33,7 @@ mortData <- mortData_all %>%
   filter(PreTrtMortNotes == "")
 ```
 
-# Plot weight variation
-```{r}
-ggplot(data = mortData, aes(x = Spp,
-                            y = WetWeight,
-                            colour = Spp,
-                            linetype = PopID)) +
-  geom_boxplot() +
-  labs(x = "Species",
-       y = "Wet Weight (g)",
-       title = "Size Distribution of Samples") +
-  scale_y_continuous(breaks = seq(0, 3, by = 0.5)) +
-  scale_x_discrete(labels = c("L. littorea",
-                              "L. obtusata",
-                              "L. saxatilis")) +
-  scale_linetype_discrete(name = "Population",
-                          labels = c("Northern", "Southern")) +
-  guides(colour = FALSE) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"),
-        axis.title.x = element_text(face = "italic"))
-```
-
-# Plot B1 mortality
+## Plot B1 mortality
 ```{r}
 mortB1 <- mortData %>%
   filter(Block == 1) %>%
@@ -81,7 +59,7 @@ ggplot(mortB1, aes(x = Time_hrs,
   geom_point() +
   labs(x = "Hours",
        y = "Percent Survival",
-       title = "Block 1 Mortality") +
+       title = "Block 1 Survival Post-Exposure") +
   scale_x_continuous(breaks = seq(0, 51, by = 25)) +
   ylim(0, 1) +
   scale_shape_manual(name = "Population",
@@ -90,7 +68,7 @@ ggplot(mortB1, aes(x = Time_hrs,
   scale_linetype_discrete(name = "Population",
                           labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Treatment",
-                      labels = c("50C, 45C", "19C, 19C", "0C, 0C"),
+                      labels = c("Heat", "Ambient", "Cold"),
                       values = c("orangered", "black", "dodgerblue")) +
   guides(shape = guide_legend(order = 1),
          linetype = guide_legend(order = 1)) +
@@ -105,7 +83,7 @@ ggplot(mortB1, aes(x = Time_hrs,
         strip.text = element_text(face = "italic"))
 ```
 
-# Plot B2 mortality
+## Plot B2 mortality
 ```{r}
 mortB2 <- mortData %>%
   filter(Block == 2) %>%
@@ -127,17 +105,18 @@ ggplot(mortB2, aes(x = Time_hrs,
                    colour = Trt)) +
   geom_line() +
   geom_point() +
-  labs(x = "Days of Treatment",
+  labs(x = "Hours",
        y = "Percent Survival",
-       title = "Block 2 Mortality") +
+       title = "Block 2 Survival Post-Exposure") +
   ylim(0, 1) +
+  scale_x_continuous(breaks = c(0, 24, 48)) +
   scale_shape_manual(name = "Population",
                      labels = c("Northern", "Southern"),
                      values = c(19, 1)) +
   scale_linetype_discrete(name = "Population",
                           labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Treatment",
-                      labels = c("47C, 44C", "20C, 19C", "-13C, -12C"),
+                      labels = c("Heat", "Ambient", "Cold"),
                       values = c("orangered", "black", "dodgerblue")) +
   guides(shape = guide_legend(order = 1),
          linetype = guide_legend(order = 1)) +
@@ -152,7 +131,7 @@ ggplot(mortB2, aes(x = Time_hrs,
         strip.text = element_text(face = "italic"))
 ```
 
-# Plot B3 mortality
+## Plot B3 mortality
 ```{r}
 mortB3 <- mortData %>%
   filter(Block == 3) %>%
@@ -174,17 +153,18 @@ ggplot(mortB3, aes(x = Time_hrs,
                    colour = Trt)) +
   geom_line() +
   geom_point() +
-  labs(x = "Days of Treatment",
+  labs(x = "Hours",
        y = "Percent Survival",
-       title = "Block 3 Mortality") +
+       title = "Block 3 Survival Post-Exposure") +
   ylim(0, 1) +
+  scale_x_continuous(breaks = c(0, 24, 48)) +
   scale_shape_manual(name = "Population",
                      labels = c("Northern", "Southern"),
                      values = c(19, 1)) +
   scale_linetype_discrete(name = "Population",
                           labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Treatment",
-                      labels = c("42C, 46C", "21C, 20C", "-12C, -12C"),
+                      labels = c("Heat", "Ambient", "Cold"),
                       values = c("orangered", "black", "dodgerblue")) +
   guides(shape = guide_legend(order = 1),
          linetype = guide_legend(order = 1)) +
@@ -199,7 +179,7 @@ ggplot(mortB3, aes(x = Time_hrs,
         strip.text = element_text(face = "italic"))
 ```
 
-# Plot B2-3 combined mortality
+## Plot B2-3 combined mortality
 ```{r}
 mortB23 <- mortData %>%
   filter(Block == 2 | Block == 3) %>%
@@ -223,7 +203,7 @@ ggplot(mortB23, aes(x = Time_hrs,
   geom_point() +
   labs(x = "Hours",
        y = "Percent Survival",
-       title = "Post-Exposure Survival") +
+       title = "Blocks 2&3 Survival Post-Exposure") +
   ylim(0, 1) +
   scale_x_continuous(breaks = c(0, 24, 48)) +
   scale_shape_manual(name = "Population",
@@ -232,7 +212,7 @@ ggplot(mortB23, aes(x = Time_hrs,
   scale_linetype_discrete(name = "Population",
                           labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Treatment",
-                      labels = c("45C", "20C", "-12C"),
+                      labels = c("Heat", "Ambient", "Cold"),
                       values = c("orangered", "black", "dodgerblue")) +
   guides(shape = guide_legend(order = 1),
          linetype = guide_legend(order = 1)) +
@@ -247,7 +227,7 @@ ggplot(mortB23, aes(x = Time_hrs,
         strip.text = element_text(face = "italic"))
 ```
 
-# Plot respiration/weight variation
+## Plot respiration/weight variation
 ```{r}
 respData <- resp %>%
   filter(!is.na(Block)) %>%
@@ -280,7 +260,7 @@ ggplot(mort_resp_all, aes(x = Spp,
         axis.text.x = element_text(face = "italic"))
 ```
 
-# Plot mortality with respect to respiration
+## Plot mortality with respect to respiration
 ```{r}
 mort_resp <- mort_resp_all %>%
   filter(PreTrtMortNotes == "" | PreTrtMortNotes == "wrong spp, orig.

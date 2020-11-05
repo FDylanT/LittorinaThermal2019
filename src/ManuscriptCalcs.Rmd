@@ -1,0 +1,43 @@
+---
+title: "Manuscript Calculations"
+author: "Ffion Titmuss"
+date: "11/4/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+setwd("~/Repos/LittorinaThermal2019")
+
+## Load libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(plotrix)
+library(tidyverse)
+```
+
+## Acclimation seawater temps
+```{r}
+acc <- read.csv("./data/AcclimationChecks.csv", header = TRUE)
+
+acc_temps <- acc %>%
+  rename("1" = TempST1_C, "2" = TempST2_C, "3" = TempST3_C) %>%
+  gather("1", "2", "3", key = "Seatable", value = "Temp_C")
+
+(mean(acc_temps$Temp_C)) # mean = 17.8
+(std.error(acc_temps$Temp_C)) # SE = 0.51
+```
+
+## Thermal treatments
+```{r}
+block <- read.csv("./data/BlockDetails.csv")
+
+trt_temps <- block %>%
+  filter(Block != 1) %>%
+  rename("1" = Day1_EndTemp_C, "2" = Day2_EndTemp_C) %>%
+  gather("1", "2", key = "Trt_Day", value = "EndTemp_C") %>%
+  group_by(Trt) %>%
+  summarise(AvgTemp = mean(EndTemp_C), SETemp = std.error(EndTemp_C))
+
+trt_temps
+```
