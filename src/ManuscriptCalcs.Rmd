@@ -24,8 +24,8 @@ acc_temps <- acc %>%
   rename("1" = TempST1_C, "2" = TempST2_C, "3" = TempST3_C) %>%
   gather("1", "2", "3", key = "Seatable", value = "Temp_C")
 
-(mean(acc_temps$Temp_C)) # mean = 17.8
-(std.error(acc_temps$Temp_C)) # SE = 0.51
+mean(acc_temps$Temp_C) # mean = 17.8
+std.error(acc_temps$Temp_C) # SE = 0.51
 ```
 
 ## Thermal treatments
@@ -39,5 +39,10 @@ trt_temps <- block %>%
   group_by(Trt) %>%
   summarise(AvgTemp = mean(EndTemp_C), SETemp = std.error(EndTemp_C))
 
-trt_temps
+# heat mean = 44.75
+# heat SE = 1.1086779
+# control mean = 20.00
+# control SE = 0.4082483
+# cold mean = -12.25
+# cold SE = 0.2500000
 ```
