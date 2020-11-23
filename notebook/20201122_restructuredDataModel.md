@@ -37,6 +37,7 @@ Fixed effects:
 | | Estimate | Std. Error | z value | Pr(>|z|) |
 | --- | --- | --- | --- | --- |
 | (Intercept) | -0.1485 | 0.6392 | -0.232 | 0.81625 |
+
 | Spplittorina_obtusata | 0.1427 | 0.2560 | 0.557 | 0.57722 |
 | Spplittorina_saxatilis | -0.7877 | 0.2565 | -3.071 | 0.00213 ** |
 | PopIDRI | -0.8708 | 0.2123 | -4.102 | 4.09e-05 *** |
