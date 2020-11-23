@@ -6,19 +6,21 @@ I restructured the data frame in LittorinaStatistics.Rmd so that each individual
 
 > summary(mort_prop)
 
-Generalized linear mixed model fit by maximum likelihood (Laplace
-  Approximation) [glmerMod]
- Family: binomial  ( logit )
+Generalized linear mixed model  
+  fit by maximum likelihood  
+  (Laplace Approximation) [glmerMod]  
+ Family: binomial  ( logit )  
 Formula: cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + (1 | Block) +  
-    (1 | Seatable)
-   Data: mort_B23
-Control: glmerControl(optimizer = "bobyqa")
+    (1 | Seatable)  
+   Data: mort_B23  
+Control: glmerControl(optimizer = "bobyqa")  
 
-     AIC      BIC   logLik deviance df.resid 
-   475.1    506.2   -229.6    459.1      352 
+| AIC | BIC | logLik | deviance | df.resid |
+|---|---|---|---|---|
+|475.1 | 506.2 | -229.6 | 459.1 | 352 |
 
 Scaled residuals: 
-    Min      1Q  Median      3Q     Max 
+    Min      1Q  Median      3Q     Max   
 -7.1132 -0.4908  0.1330  0.4477  3.4226 
 
 Random effects:
