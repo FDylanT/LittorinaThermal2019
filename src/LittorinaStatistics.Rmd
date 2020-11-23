@@ -22,26 +22,29 @@ library(blme)
 litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
  rename(Spp = Genus_Species)
 
+#mort_B23_hrs <- litt %>%
+#  filter(PreTrtMortNotes != "dead") %>% # remove larvae that died during acclimation or were misidentified
+#  filter(Block == 2 | Block == 3) %>%
+#  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>% # convert trt days to hours
+#  mutate("0" = TRUE) %>% # add time point 0 where all samples were alive
+#  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+#  mutate(Alive = as.integer(Survived)) %>%
+#  mutate(Dead = ifelse(Alive == 1, 0, 1))
+
 mort_B23 <- litt %>%
-  filter(PreTrtMortNotes != "dead") %>%
-    # remove larvae that died during acclimation or were misidentified
+  filter(PreTrtMortNotes != "dead") %>% # remove larvae that died during acclimation or were misidentified
   filter(Block == 2 | Block == 3) %>%
-  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
-    # convert trt days to hours
-  mutate("0" = TRUE) %>%
-    # add time point 0 where all samples were alive
-  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
-    # transform wide data to long data
-  mutate(Alive = as.integer(Survived)) %>%
-    # convert T/F to 1/0
-  mutate(Dead = ifelse(Alive == 1, 0, 1))
+  mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
+  mutate(DaysDead = 2 - DaysAlive) %>%
+  mutate(PropDaysAlive = DaysAlive/2)
 ```
 
 ## Tests on mortality
+Met with Katie & Molly on 11/17/20 -- models as written below failed to converge, so trying again with recoded data
 ```{r}
-mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs+
-              (1|Block), #(1|Time_hrs),#(1|Seatable),# 
-              family = binomial(),control = glmerControl(optimizer = "bobyqa"),
+mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs +
+              (1|Block) + (1|SampleID) + (1|Seatable), 
+              family = binomial(), control = glmerControl(optimizer = "bobyqa"),
               data = mort_B23)
 summary(mort1) # So it works with block ONLY. 
 
@@ -91,14 +94,24 @@ mort2 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (
                family = binomial(),
                data = mort_B23,
                control = glmerControl(optimizer = "bobyqa",
-                                       optCtrl = list(maxfun = 10000),
-                                       tol = 0.001))
+                                      optCtrl = list(maxfun = 10000),
+                                      tol = 0.001))
 
 
 # This should test optimizers to see which one should work - but its not working either! 
 require(dfoptim)
 aa_maximal <- allFit(mort2)
 
+```
+
+## Trying model again after recoding data
+```{r}
+mort_prop <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + (1|Block) + (1|Seatable),
+               family = binomial(),
+               data = mort_B23,
+               control = glmerControl(optimizer = "bobyqa"))
+
+summary(mort_prop)
 ```
 
 ```{r}
