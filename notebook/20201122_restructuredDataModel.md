@@ -33,6 +33,7 @@ Random effects:
 Number of obs: 360, groups: Seatable, 3; Block, 2
 
 Fixed effects:
+
 | | Estimate | Std. Error | z value | Pr(>|z|) |
 | --- | --- | --- | --- | --- |
 | (Intercept) | -0.1485 | 0.6392 | -0.232 | 0.81625 |
