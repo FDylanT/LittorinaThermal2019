@@ -1,6 +1,6 @@
 # Model Results after Modifying Data
 
-YAY!! It converged!!
+YAY!! Hurrah!! It converged!!
 
 I restructured the data frame in LittorinaStatistics.Rmd so that each individual appeared in only one line, with new columns representing the number of exposure days each snail was alive and dead (0-2 of 2 days total). I ran a new generalized linear mixed-effects model on this data (assigned to mort_prop), which converged and provided the results below.
 
