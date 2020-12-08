@@ -31,4 +31,6 @@ mortData <- litt %>%
   mutate(Count = 1) %>%
   group_by(Spp, PopID, Trt, Block) %>%
   summarise(Count = sum(Count))
+
+(mortData)
 ```
