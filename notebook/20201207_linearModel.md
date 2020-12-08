@@ -21,8 +21,8 @@ PopIDRI                -0.22660    0.06407  -3.537 0.000459 ***
 TrtHS                   0.69344    0.07847   8.837  < 2e-16 ***  
 TrtNT                   1.26010    0.07847  16.059  < 2e-16 ***
 
-Residual standard error: 0.6078 on 354 degrees of freedom
-Multiple R-squared:  0.4435,	Adjusted R-squared:  0.4356 
+Residual standard error: 0.6078 on 354 degrees of freedom  
+Multiple R-squared:  0.4435,	Adjusted R-squared:  0.4356  
 F-statistic: 56.42 on 5 and 354 DF,  p-value: < 2.2e-16
 
 
