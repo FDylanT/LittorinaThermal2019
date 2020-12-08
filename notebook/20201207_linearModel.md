@@ -37,7 +37,7 @@ Residuals:
 | --- | --- | --- | --- | --- |
 | -1.36334 | -0.36334 | -0.08902 | 0.36229 | 1.92896 |
 
-Coefficients:
+Coefficients:  
                        Estimate Std. Error t value Pr(>|t|)    
 (Intercept)             1.13674    0.07798  14.577  < 2e-16 ***
 Spplittorina_obtusata  -0.03219    0.07830  -0.411 0.681221    
@@ -45,7 +45,6 @@ Spplittorina_saxatilis  0.21238    0.07847   2.706 0.007131 **
 PopIDRI                 0.22660    0.06407   3.537 0.000459 ***
 TrtHS                  -0.69344    0.07847  -8.837  < 2e-16 ***
 TrtNT                  -1.26010    0.07847 -16.059  < 2e-16 ***
----
 
 Residual standard error: 0.6078 on 354 degrees of freedom  
 Multiple R-squared:  0.4435,	Adjusted R-squared:  0.4356  
