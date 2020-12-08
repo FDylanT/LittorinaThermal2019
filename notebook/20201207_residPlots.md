@@ -1,40 +1,7 @@
-# Observation Counts
+# Residual Plots
 
-| Spp | Pop | Trt | Block | COUNT |
-|---|---|---|---|---|
-| littorina_littorea	| N	| HS	| A	| 10 |
-| littorina_littorea	| N	| HS	| B	| 10 |
-| littorina_littorea	| N	| Ctrl	| A	| 10 |
-| littorina_littorea	| N	| Ctrl	| B	| 10 |
-| littorina_littorea	| N	| CS	| A	| 10 |
-| littorina_littorea	| N	| CS	| B	| 11 |
-| littorina_littorea	| S	| HS	| A	| 10 |
-| littorina_littorea	| S	| HS	| B	| 10 |
-| littorina_littorea	| S	| Ctrl	| A	| 10 |
-| littorina_littorea	| S	| Ctrl	| B	| 10 |
-| littorina_littorea	| S	| CS	| A	| 10 |
-| littorina_littorea	| S	| CS	| B	| 10 |
-| littorina_obtusata	| N	| HS	| A	| 10 |
-| littorina_obtusata	| N	| HS	| B	| 10 |
-| littorina_obtusata	| N	| Ctrl	| A	| 10 |
-| littorina_obtusata	| N	| Ctrl	| B	| 10 |
-| littorina_obtusata	| N	| CS	| A	| 10 |
-| littorina_obtusata	| N	| CS	| B	| 10 |
-| littorina_obtusata	| S	| HS	| A	| 10 |
-| littorina_obtusata	| S	| HS	| B	| 10 |
-| littorina_obtusata	| S	| Ctrl	| A	| 10 |
-| littorina_obtusata	| S	| Ctrl	| B	| 10 |
-| littorina_obtusata	| S	| CS	| A	| 10 |
-| littorina_obtusata	| S	| CS	| B	| 10 |
-| littorina_saxatilis	| N	| HS	| A	| 10 |
-| littorina_saxatilis	| N	| HS	| B	| 10 |
-| littorina_saxatilis	| N	| Ctrl	| A	| 10 |
-| littorina_saxatilis	| N	| Ctrl	| B	| 10 |
-| littorina_saxatilis	| N	| CS	| A	| 10 |
-| littorina_saxatilis	| N	| CS	| B	| 9 |
-| littorina_saxatilis	| S	| HS	| A	| 10 |
-| littorina_saxatilis	| S	| HS	| B	| 10 |
-| littorina_saxatilis	| S	| Ctrl	| A	| 10 |
-| littorina_saxatilis	| S	| Ctrl	| B	| 10 |
-| littorina_saxatilis	| S	| CS	| A	| 10 |
-| littorina_saxatilis	| S	| CS	| B	| 10 |
+### Function of Block
+![image](https://github.com/FfionT/LittorinaThermal2019/blob/master/notebook/notebook_figures/Resids_Block.png)
+
+### Function of Seatable
+![image](https://github.com/FfionT/LittorinaThermal2019/blob/master/notebook/notebook_figures/Resids_Seatable.png)
