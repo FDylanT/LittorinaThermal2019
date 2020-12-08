@@ -15,14 +15,12 @@ litt <- read.csv("~/Repos/LittorinaThermal2019/data/LittorinaData.csv")
 ```{r}
 mortData <- litt %>%
   rename(Spp = Genus_Species) %>%
-  mutate(Spp = recode(Spp,
-                      littorina_littorea = "LL",
-                      littorina_obtusata = "LO",
-                      littorina_saxatilis = "LS")) %>%
-  mutate(SampleID = as.character(SampleID)) %>%
-  mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS"))) %>%
   filter(PreTrtMortNotes == "") %>%
   filter(Block != 1) %>%
+  mutate(PopID = recode(PopID, MA = "N", RI = "S")) %>%
+  mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS"))) %>%
+  mutate(Trt = recode(Trt, NT = "Ctrl")) %>%
+  mutate(Block = recode(Block, "2" = "A", "3" = "B")) %>%
   mutate(Count = 1) %>%
   group_by(Spp, PopID, Trt, Block) %>%
   summarise(Count = sum(Count))

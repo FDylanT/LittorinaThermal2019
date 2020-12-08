@@ -32,7 +32,7 @@ litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
 #  mutate(Dead = ifelse(Alive == 1, 0, 1))
 
 mort_B23 <- litt %>%
-  filter(PreTrtMortNotes != "dead") %>% # remove larvae that died during acclimation or were misidentified
+  filter(PreTrtMortNotes == "") %>% # remove larvae that died during acclimation or were misidentified
   filter(Block == 2 | Block == 3) %>%
   mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
   mutate(DaysDead = 2 - DaysAlive) %>%
@@ -44,8 +44,48 @@ Met with Katie & Molly on 11/17/20 -- models as written below failed to converge
 ```{r}
 mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs +
               (1|Block) + (1|SampleID) + (1|Seatable), 
-              family = binomial(), control = glmerControl(optimizer = "bobyqa"),
+              family = binomial(),
+              control = glmerControl(optimizer = "bobyqa"),
               data = mort_B23)
+
+summary(mort1) 
+```
+
+## Trying model again after recoding data
+```{r}
+mort_prop <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + (1|Block) + (1|Seatable),
+               family = binomial(),
+               data = mort_B23,
+               control = glmerControl(optimizer = "bobyqa"))
+
+summary(mort_prop)
+```
+
+## Run regular linear model
+```{r}
+mort_linear <- lm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt, data = mort_B23)
+
+summary(mort_linear)
+```
+
+## Plot residuals
+```{r}
+resids <- resid(mort_linear) %>%
+  as.data.frame()
+
+boxplot(resids$DaysAlive ~ mort_B23$Block)
+
+boxplot(resids$DaysAlive ~ mort_B23$Seatable)
+```
+
+##########
+```{r}
+mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs +
+              (1|Block) + (1|SampleID) + (1|Seatable), 
+              family = binomial(),
+              control = glmerControl(optimizer = "bobyqa"),
+              data = mort_B23)
+
 summary(mort1) # So it works with block ONLY. 
 
 # Extract and Plot.
@@ -103,17 +143,6 @@ require(dfoptim)
 aa_maximal <- allFit(mort2)
 
 ```
-
-## Trying model again after recoding data
-```{r}
-mort_prop <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + (1|Block) + (1|Seatable),
-               family = binomial(),
-               data = mort_B23,
-               control = glmerControl(optimizer = "bobyqa"))
-
-summary(mort_prop)
-```
-
 ```{r}
 # Just for funsies - look at data in proportion format
 
