@@ -1,23 +1,18 @@
 ---
 title: "20201202_obsTable"
-author: "Ffion Titmuss"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
-setwd("~/Repos/LittorinaThermal2019")
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+litt <- read.csv("~/Repos/LittorinaThermal2019/data/LittorinaData.csv")
 ```
 
-## Count observations
 ```{r}
-litt <- read.csv("./data/LittorinaData.csv")
-
 mortData <- litt %>%
   rename(Spp = Genus_Species) %>%
   mutate(Spp = recode(Spp,
@@ -32,5 +27,5 @@ mortData <- litt %>%
   group_by(Spp, PopID, Trt, Block) %>%
   summarise(Count = sum(Count))
 
-(mortData)
+print(mortData, n = 100)
 ```
