@@ -1,0 +1,34 @@
+---
+title: "20201202_obsTable"
+author: "Ffion Titmuss"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+setwd("~/Repos/LittorinaThermal2019")
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Count observations
+```{r}
+litt <- read.csv("./data/LittorinaData.csv")
+
+mortData <- litt %>%
+  rename(Spp = Genus_Species) %>%
+  mutate(Spp = recode(Spp,
+                      littorina_littorea = "LL",
+                      littorina_obtusata = "LO",
+                      littorina_saxatilis = "LS")) %>%
+  mutate(SampleID = as.character(SampleID)) %>%
+  mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS"))) %>%
+  filter(PreTrtMortNotes == "") %>%
+  filter(Block != 1) %>%
+  mutate(Count = 1) %>%
+  group_by(Spp, PopID, Trt, Block) %>%
+  summarise(Count = sum(Count))
+```
