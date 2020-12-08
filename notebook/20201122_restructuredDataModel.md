@@ -17,7 +17,7 @@ Control: glmerControl(optimizer = "bobyqa")
 
 | AIC | BIC | logLik | deviance | df.resid |
 |---|---|---|---|---|
-|475.1 | 506.2 | -229.6 | 459.1 | 352 |
+| 475.1 | 506.2 | -229.6 | 459.1 | 352 |
 
 Scaled residuals: 
 | Min | 1Q | Median | 3Q | Max |
