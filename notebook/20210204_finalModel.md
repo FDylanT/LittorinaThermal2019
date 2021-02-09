@@ -6,7 +6,7 @@ brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Blo
 
 > summary(mort17)
 
-![image](https://github.com/FfionT/LittorinaThermal2019/blob/master/notebook/notebook_figures/mort17_summary.png){width="50%""}
+<img src="https://github.com/FfionT/LittorinaThermal2019/blob/master/notebook/notebook_figures/mort17_summary.png" width="48">
 
 > plot(mort17)
 
