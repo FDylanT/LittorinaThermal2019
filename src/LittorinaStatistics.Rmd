@@ -14,7 +14,10 @@ setwd("~/Repos/LittorinaThermal2019")
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(lme4)
-library(blme)
+library(car)
+library(bbmle)
+library(lsmeans)
+library(brglm)
 ```
 
 ## Load data
@@ -63,20 +66,175 @@ summary(mort_prop)
 
 ## Run regular linear model
 ```{r}
-mort_linear <- lm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt, data = mort_B23)
+mort_linear <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt, data = mort_B23, family = binomial())
 
 summary(mort_linear)
+drop1(mort_linear)
+anova(mort_linear)
+
+mort1 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt, data = mort_B23, family = binomial())
+
+summary(mort1)
+drop1(mort1)
 ```
 
 ## Plot residuals
 ```{r}
-resids <- resid(mort_linear) %>%
-  as.data.frame()
+resids <- resid(mort_linear)
 
-boxplot(resids$DaysAlive ~ mort_B23$Block)
+boxplot(resids ~ mort_B23$Block)
+boxplot(resids ~ mort_B23$Seatable)
 
-boxplot(resids$DaysAlive ~ mort_B23$Seatable)
+resids1 <- resid(mort1)
+
+boxplot(resids1 ~ mort_B23$Block)
+boxplot(resids1 ~ mort_B23$Seatable)
 ```
+
+## Add block effect
+```{r}
+mort_glm <- glmer(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt + (1|Block), data = mort_B23, family = binomial())
+
+mort2 <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mort_B23, family = binomial())
+
+summary(mort2)
+anova(mort2)
+aov(mort2)
+step(mort2)
+anova(mort2, test = "Chisq")
+
+mort3 <- lmer(DaysAlive ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mort_B23)
+
+summary(mort3)
+anova(mort3)
+
+plot(mort3)
+
+step(mort3)
+
+mort4 <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mort_B23, family = quasibinomial()) # quasi can't be used in glmer
+
+mort5 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + Block, data = mort_B23, family = quasibinomial())
+
+anova(mort5)
+aov(mort5)
+anova(mort5, test = "Chisq")
+
+mort6 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + Block, data = mort_B23, family = quasibinomial(link = "logit"))
+
+Anova(mort6, type = 3)
+```
+
+## Take II
+```{r}
+mort7 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block, data = mort_B23, family = binomial(link = "logit"))
+
+Anova(mort7, type = 3)
+
+## Check assumptions
+# Dispersion
+
+var(mort_B23$DaysAlive) # 0.65
+mean(mort_B23$DaysAlive) # 1.34
+# underdispersed
+
+summary(mort7)
+
+# resid dev. = 280.42
+# resid df = 324
+# underdispersed
+
+mort8 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort7, mort8, test = "LRT")
+drop1(mort8)
+
+mort9 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort8, mort9, test = "LRT")
+drop1(mort9)
+
+mort10 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort9, mort10, test = "LRT")
+drop1(mort10)
+
+mort11 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort10, mort11, test = "LRT")
+drop1(mort11)
+
+mort12 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort11, mort12, test = "LRT")
+drop1(mort12)
+
+mort13 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort12, mort13, test = "LRT")
+drop1(mort13)
+
+mort14 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort13, mort14, test = "LRT")
+drop1(mort14)
+
+mort15 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+anova(mort14, mort15, test = "LRT")
+Anova(mort14, type = 3)
+Anova(mort15, type = 3)
+
+summary(mort14)
+
+# resid dev = 292.68
+# resid df = 343
+
+# Diagnostic plots for outliers and intercorrelation
+  par(mfrow = c(2,2))
+  plot(mort14)
+  # RESULT: variance is not equal across data points (scale-location plot) change to quasibinomial
+  
+mort16 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = quasibinomial(link = "logit")) # error message gone
+
+plot(mort16)
+summary(mort16)
+Anova(mort16, type = 3)
+
+AIC(mort14) # 441.74
+AIC(mort16) # NA
+
+ICtab(mort14, mort16)
+
+lsmeans(mort14, pairwise ~ Trt, adjust = "Tukey")
+summary(mort14)
+
+summary(mort15)
+```
+
+## Try Baysian glm
+```{r}
+mort17 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+
+summary(mort17)
+
+plot(mort17)
+
+newdat <- expand.grid(unique(mort_B23$Spp), unique(mort_B23$PopID), unique(mort_B23$Trt), unique(mort_B23$Block))
+plogis(predict(mort17))
+dim(mort_B23)
+predict(mort17, newdat)
+mort_B23$predicted <- plogis(predict(mort17))
+
+ggplot(mort_B23, aes(x = PropDaysAlive, y = predicted)) +
+  geom_point()
+
+# confint(mort17)
+```
+
+
+
+
 
 ##########
 ```{r}
