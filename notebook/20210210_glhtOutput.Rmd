@@ -1,0 +1,30 @@
+---
+title: "glht Output - Pairwise Contrasts"
+author: "Ffion Titmuss"
+date: "2/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(multcomp)
+
+litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
+ rename(Spp = Genus_Species)
+
+mort_B23 <- litt %>%
+  filter(PreTrtMortNotes == "") %>% # remove larvae that died during acclimation or were misidentified
+  filter(Block == 2 | Block == 3) %>%
+  mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
+  mutate(DaysDead = 2 - DaysAlive) %>%
+  mutate(PropDaysAlive = DaysAlive/2)
+```
+
+```{r}
+mort_B23$int <- with(mort_B23, interaction(Spp, PopID, Block))
+m1 <- lm(DaysAlive ~ Trt + int, data = mort_B23)
+l2 <- glht(m1, linfct = mcp(int = "Tukey"))
+summary(l2)
+```
