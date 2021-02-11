@@ -365,8 +365,8 @@ summary(mortH)
 ```{r}
 mort_B23$int <- with(mort_B23, interaction(Spp, PopID, Block))
 m1 <- lm(DaysAlive ~ Trt + int, data = mort_B23)
-l2 <- glht(m1, linfct = mcp(int = "Tukey"))
-summary(l2)
+pairwise <- glht(m1, linfct = mcp(int = "Tukey"))
+summary(pairwise)
 ```
 
 ## Visualize data
