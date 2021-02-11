@@ -1,9 +1,9 @@
 # glht Output - Pairwise Comparisons
 
-> mort_B23$int <- with(mort_B23, interaction(Spp, PopID, Block))
-> m1 <- lm(DaysAlive ~ Trt + int, data = mort_B23)
-> pairwise <- glht(m1, linfct = mcp(int = "Tukey"))
-> summary(pairwise)
+> mort_B23$int <- with(mort_B23, interaction(Spp, PopID, Block))  
+> m1 <- lm(DaysAlive ~ Trt + int, data = mort_B23)  
+> pairwise <- glht(m1, linfct = mcp(int = "Tukey"))  
+> summary(pairwise)  
 
 Simultaneous Tests for General Linear Hypotheses
 
