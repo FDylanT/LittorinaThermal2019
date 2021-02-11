@@ -18,6 +18,7 @@ library(car)
 library(bbmle)
 library(lsmeans)
 library(brglm)
+library(multcomp)
 ```
 
 ## Load data
@@ -217,9 +218,159 @@ summary(mort15)
 mort17 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
 
 summary(mort17)
-
 plot(mort17)
 
+resid17 <- resid(mort17)
+
+boxplot(resid17 ~ mort_B23$Block)
+
+boxplot(mort_B23$DaysAlive ~ mort_B23$Block)
+boxplot(mort_B23$DaysAlive ~ mort_B23$Spp)
+boxplot(mort_B23$DaysAlive ~ mort_B23$Spp * mort_B23$PopID)
+par(mar = c(10, 4, 1, 1))
+boxplot(mort_B23$DaysAlive ~ mort_B23$Spp * mort_B23$Trt, las = 2)
+par(mar = c(4, 4, 1, 1))
+boxplot(mort_B23$DaysAlive ~ mort_B23$PopID * mort_B23$Trt)
+```
+
+## Conduct model selection using brglm models
+```{r}
+mort_B23$Trt <- factor(mort_B23$Trt, levels = c("NT", "HS", "CS"))
+
+mortA <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block, data = mort_B23, family = binomial(link = "logit"))
+
+summary(mortA)
+
+# resid dev. = 292.04
+# resid df = 324
+# underdispersed
+
+mortB <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortA) #479.1
+AIC(mortB) #470.8
+
+mortC.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortC.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortC.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortC.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortB) #470.8
+AIC(mortC.1) #462.1
+AIC(mortC.2) #467.5
+AIC(mortC.3) #460.9
+AIC(mortC.4) #467.5
+
+mortC <- mortC.3
+
+mortD.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortD.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortD.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortC) #460.9
+AIC(mortD.1) #452.4
+AIC(mortD.2) #457.5
+AIC(mortD.3) #458.3
+
+mortD <- mortD.1
+
+mortE.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortE.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortD) #452.4
+AIC(mortE.1) #449.4
+AIC(mortE.2) #450.6
+
+mortE <- mortE.1
+
+mortF <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortE) #449.4
+AIC(mortF) #448.0
+
+mortG.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:PopID, data = mort_B23, family = binomial(link = "logit"))
+
+mortG.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortG.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortG.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortG.5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortG.6 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortF) #448.0
+AIC(mortG.1) #452.3
+AIC(mortG.2) #455.7
+AIC(mortG.3) #447.3
+AIC(mortG.4) #450.1
+AIC(mortG.5) #445.9
+AIC(mortG.6) #449.8
+
+mortG <- mortG.5
+
+mortH.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:PopID, data = mort_B23, family = binomial(link = "logit"))
+
+mortH.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortH.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+
+mortH.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortH.5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortG) #445.9
+AIC(mortH.1) #450.3
+AIC(mortH.2) #453.6
+AIC(mortH.3) #445.3
+AIC(mortH.4) #448.2
+AIC(mortH.5) #448.2
+
+mortH <- mortH.3
+
+mortJ.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Spp:PopID, data = mort_B23, family = binomial(link = "logit"))
+
+mortJ.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Spp:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortJ.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+
+mortJ.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+
+AIC(mortH) #445.3
+AIC(mortJ.1) #451.0
+AIC(mortJ.2) #451.9
+AIC(mortJ.3) #447.4
+AIC(mortJ.4) #445.7
+
+summary(mortH)
+
+# resid dev = 296.26
+# resid df = 343
+
+# Diagnostic plots for outliers and intercorrelation
+  par(mfrow = c(2, 2))
+  plot(mortH)
+  # RESULT: 
+  par(mfrow = c(1, 1))
+```
+
+## Test significance
+```{r}
+mort_B23$int <- with(mort_B23, interaction(Spp, PopID, Block))
+m1 <- lm(DaysAlive ~ Trt + int, data = mort_B23)
+l2 <- glht(m1, linfct = mcp(int = "Tukey"))
+summary(l2)
+```
+
+## Visualize data
+```{r}
 newdat <- expand.grid(unique(mort_B23$Spp), unique(mort_B23$PopID), unique(mort_B23$Trt), unique(mort_B23$Block))
 plogis(predict(mort17))
 dim(mort_B23)
