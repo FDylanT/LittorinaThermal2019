@@ -6,7 +6,8 @@ Multiple Comparisons of Means: Tukey Contrasts
 
 Fit: lm(formula = DaysAlive ~ Trt + int, data = mort_B23)
 
-Linear Hypotheses:
+Linear Hypotheses:  
+
 |                                                           |Estimate |Std. Error |t value |Pr(>|t|) |
 |---|---|---|---|---|
 |littorina_obtusata.MA.2 - littorina_littorea.MA.2 == 0   | 1.000e-01  1.442e-01   0.693   0.9999    |
