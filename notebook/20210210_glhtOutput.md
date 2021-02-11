@@ -75,6 +75,3 @@ Linear Hypotheses:
 | littorina_obtusata.RI.3 - littorina_littorea.RI.3 == 0   | -3.333e-02 | 1.442e-01  | -0.231  | 1.0000     |           |
 | littorina_saxatilis.RI.3 - littorina_littorea.RI.3 == 0  | -3.667e-01 | 1.442e-01  | -2.542  | 0.3177     |           |
 | littorina_saxatilis.RI.3 - littorina_obtusata.RI.3 == 0  | -3.333e-01 | 1.442e-01  | -2.311  | 0.4700     |           |
-
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-(Adjusted p values reported -- single-step method)
