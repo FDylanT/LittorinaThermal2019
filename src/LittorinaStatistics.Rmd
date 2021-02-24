@@ -26,7 +26,7 @@ library(multcomp)
 litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
  rename(Spp = Genus_Species)
 
-#mort_B23_hrs <- litt %>%
+#mortB23_hrs <- litt %>%
 #  filter(PreTrtMortNotes != "dead") %>% # remove larvae that died during acclimation or were misidentified
 #  filter(Block == 2 | Block == 3) %>%
 #  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>% # convert trt days to hours
@@ -35,9 +35,10 @@ litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
 #  mutate(Alive = as.integer(Survived)) %>%
 #  mutate(Dead = ifelse(Alive == 1, 0, 1))
 
-mort_B23 <- litt %>%
+mortB23 <- litt %>%
   filter(PreTrtMortNotes == "") %>% # remove larvae that died during acclimation or were misidentified
   filter(Block == 2 | Block == 3) %>%
+  mutate(Block = as.factor(Block)) %>%
   mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
   mutate(DaysDead = 2 - DaysAlive) %>%
   mutate(PropDaysAlive = DaysAlive/2)
@@ -50,7 +51,7 @@ mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs +
               (1|Block) + (1|SampleID) + (1|Seatable), 
               family = binomial(),
               control = glmerControl(optimizer = "bobyqa"),
-              data = mort_B23)
+              data = mortB23)
 
 summary(mort1) 
 ```
@@ -59,7 +60,7 @@ summary(mort1)
 ```{r}
 mort_prop <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + (1|Block) + (1|Seatable),
                family = binomial(),
-               data = mort_B23,
+               data = mortB23,
                control = glmerControl(optimizer = "bobyqa"))
 
 summary(mort_prop)
@@ -67,13 +68,13 @@ summary(mort_prop)
 
 ## Run regular linear model
 ```{r}
-mort_linear <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt, data = mort_B23, family = binomial())
+mort_linear <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt, data = mortB23, family = binomial())
 
 summary(mort_linear)
 drop1(mort_linear)
 anova(mort_linear)
 
-mort1 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt, data = mort_B23, family = binomial())
+mort1 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt, data = mortB23, family = binomial())
 
 summary(mort1)
 drop1(mort1)
@@ -83,20 +84,20 @@ drop1(mort1)
 ```{r}
 resids <- resid(mort_linear)
 
-boxplot(resids ~ mort_B23$Block)
-boxplot(resids ~ mort_B23$Seatable)
+boxplot(resids ~ mortB23$Block)
+boxplot(resids ~ mortB23$Seatable)
 
 resids1 <- resid(mort1)
 
-boxplot(resids1 ~ mort_B23$Block)
-boxplot(resids1 ~ mort_B23$Seatable)
+boxplot(resids1 ~ mortB23$Block)
+boxplot(resids1 ~ mortB23$Seatable)
 ```
 
 ## Add block effect
 ```{r}
-mort_glm <- glmer(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt + (1|Block), data = mort_B23, family = binomial())
+mort_glm <- glmer(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt + (1|Block), data = mortB23, family = binomial())
 
-mort2 <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mort_B23, family = binomial())
+mort2 <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mortB23, family = binomial())
 
 summary(mort2)
 anova(mort2)
@@ -104,7 +105,7 @@ aov(mort2)
 step(mort2)
 anova(mort2, test = "Chisq")
 
-mort3 <- lmer(DaysAlive ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mort_B23)
+mort3 <- lmer(DaysAlive ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mortB23)
 
 summary(mort3)
 anova(mort3)
@@ -113,30 +114,30 @@ plot(mort3)
 
 step(mort3)
 
-mort4 <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mort_B23, family = quasibinomial()) # quasi can't be used in glmer
+mort4 <- glmer(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + (1|Block), data = mortB23, family = quasibinomial()) # quasi can't be used in glmer
 
-mort5 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + Block, data = mort_B23, family = quasibinomial())
+mort5 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + Block, data = mortB23, family = quasibinomial())
 
 anova(mort5)
 aov(mort5)
 anova(mort5, test = "Chisq")
 
-mort6 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + Block, data = mort_B23, family = quasibinomial(link = "logit"))
+mort6 <- glm(cbind(DaysAlive, DaysDead) ~ Spp + PopID + Trt + Spp:PopID + Spp:Trt + PopID:Trt + Block, data = mortB23, family = quasibinomial(link = "logit"))
 
 Anova(mort6, type = 3)
 ```
 
 ## Take II
 ```{r}
-mort7 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block, data = mort_B23, family = binomial(link = "logit"))
+mort7 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block, data = mortB23, family = binomial(link = "logit"))
 
 Anova(mort7, type = 3)
 
 ## Check assumptions
 # Dispersion
 
-var(mort_B23$DaysAlive) # 0.65
-mean(mort_B23$DaysAlive) # 1.34
+var(mortB23$DaysAlive) # 0.65
+mean(mortB23$DaysAlive) # 1.34
 # underdispersed
 
 summary(mort7)
@@ -145,42 +146,42 @@ summary(mort7)
 # resid df = 324
 # underdispersed
 
-mort8 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mort8 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort7, mort8, test = "LRT")
 drop1(mort8)
 
-mort9 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mort9 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort8, mort9, test = "LRT")
 drop1(mort9)
 
-mort10 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+mort10 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort9, mort10, test = "LRT")
 drop1(mort10)
 
-mort11 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+mort11 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort10, mort11, test = "LRT")
 drop1(mort11)
 
-mort12 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mort12 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort11, mort12, test = "LRT")
 drop1(mort12)
 
-mort13 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+mort13 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort12, mort13, test = "LRT")
 drop1(mort13)
 
-mort14 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+mort14 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort13, mort14, test = "LRT")
 drop1(mort14)
 
-mort15 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mort15 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 anova(mort14, mort15, test = "LRT")
 Anova(mort14, type = 3)
@@ -196,7 +197,7 @@ summary(mort14)
   plot(mort14)
   # RESULT: variance is not equal across data points (scale-location plot) change to quasibinomial
   
-mort16 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = quasibinomial(link = "logit")) # error message gone
+mort16 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = quasibinomial(link = "logit")) # error message gone
 
 plot(mort16)
 summary(mort16)
@@ -213,31 +214,32 @@ summary(mort14)
 summary(mort15)
 ```
 
-## Try Baysian glm
+## Try bias-reduced glm
 ```{r}
-mort17 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+mort17 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
 
 summary(mort17)
 plot(mort17)
 
 resid17 <- resid(mort17)
 
-boxplot(resid17 ~ mort_B23$Block)
+par(mfrow = c(1, 1))
+boxplot(resid17 ~ mortB23$Block)
 
-boxplot(mort_B23$DaysAlive ~ mort_B23$Block)
-boxplot(mort_B23$DaysAlive ~ mort_B23$Spp)
-boxplot(mort_B23$DaysAlive ~ mort_B23$Spp * mort_B23$PopID)
+boxplot(mortB23$DaysAlive ~ mortB23$Block)
+boxplot(mortB23$DaysAlive ~ mortB23$Spp)
+boxplot(mortB23$DaysAlive ~ mortB23$Spp * mortB23$PopID)
 par(mar = c(10, 4, 1, 1))
-boxplot(mort_B23$DaysAlive ~ mort_B23$Spp * mort_B23$Trt, las = 2)
+boxplot(mortB23$DaysAlive ~ mortB23$Spp * mortB23$Trt, las = 2)
 par(mar = c(4, 4, 1, 1))
-boxplot(mort_B23$DaysAlive ~ mort_B23$PopID * mort_B23$Trt)
+boxplot(mortB23$DaysAlive ~ mortB23$PopID * mortB23$Trt)
 ```
 
 ## Conduct model selection using brglm models
 ```{r}
-mort_B23$Trt <- factor(mort_B23$Trt, levels = c("NT", "HS", "CS"))
+mortB23$Trt <- factor(mortB23$Trt, levels = c("NT", "CS", "HS"))
 
-mortA <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block, data = mort_B23, family = binomial(link = "logit"))
+mortA <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block, data = mortB23, family = binomial(link = "logit"))
 
 summary(mortA)
 
@@ -245,18 +247,18 @@ summary(mortA)
 # resid df = 324
 # underdispersed
 
-mortB <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortB <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortA) #479.1
 AIC(mortB) #470.8
 
-mortC.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortC.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:PopID:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortC.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+mortC.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:PopID:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortC.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortC.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortC.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortC.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortB) #470.8
 AIC(mortC.1) #462.1
@@ -266,11 +268,11 @@ AIC(mortC.4) #467.5
 
 mortC <- mortC.3
 
-mortD.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortD.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortD.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+mortD.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortD.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortD.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortC) #460.9
 AIC(mortD.1) #452.4
@@ -279,9 +281,9 @@ AIC(mortD.3) #458.3
 
 mortD <- mortD.1
 
-mortE.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+mortE.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortE.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortE.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortD) #452.4
 AIC(mortE.1) #449.4
@@ -289,22 +291,22 @@ AIC(mortE.2) #450.6
 
 mortE <- mortE.1
 
-mortF <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortF <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortE) #449.4
 AIC(mortF) #448.0
 
-mortG.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:PopID, data = mort_B23, family = binomial(link = "logit"))
+mortG.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:PopID, data = mortB23, family = binomial(link = "logit"))
 
-mortG.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortG.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortG.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+mortG.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortG.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortG.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortG.5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block, data = mort_B23, family = binomial(link = "logit"))
+mortG.5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortG.6 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortG.6 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortF) #448.0
 AIC(mortG.1) #452.3
@@ -316,15 +318,15 @@ AIC(mortG.6) #449.8
 
 mortG <- mortG.5
 
-mortH.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:PopID, data = mort_B23, family = binomial(link = "logit"))
+mortH.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:PopID, data = mortB23, family = binomial(link = "logit"))
 
-mortH.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortH.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortH.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mort_B23, family = binomial(link = "logit"))
+mortH.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
 
-mortH.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortH.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - PopID:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortH.5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortH.5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortG) #445.9
 AIC(mortH.1) #450.3
@@ -335,13 +337,13 @@ AIC(mortH.5) #448.2
 
 mortH <- mortH.3
 
-mortJ.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Spp:PopID, data = mort_B23, family = binomial(link = "logit"))
+mortJ.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Spp:PopID, data = mortB23, family = binomial(link = "logit"))
 
-mortJ.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Spp:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortJ.2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Spp:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortJ.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - PopID:Trt, data = mort_B23, family = binomial(link = "logit"))
+mortJ.3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - PopID:Trt, data = mortB23, family = binomial(link = "logit"))
 
-mortJ.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Trt:Block, data = mort_B23, family = binomial(link = "logit"))
+mortJ.4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block - Trt:Block, data = mortB23, family = binomial(link = "logit"))
 
 AIC(mortH) #445.3
 AIC(mortJ.1) #451.0
@@ -359,25 +361,27 @@ summary(mortH)
   plot(mortH)
   # RESULT: 
   par(mfrow = c(1, 1))
+  
+str(mortB23)
 ```
 
 ## Test significance
 ```{r}
-mort_B23$int <- with(mort_B23, interaction(Spp, PopID, Block))
-m1 <- lm(DaysAlive ~ Trt + int, data = mort_B23)
+mortB23$int <- with(mortB23, interaction(Spp, PopID, Block))
+m1 <- lm(DaysAlive ~ Trt + int, data = mortB23)
 pairwise <- glht(m1, linfct = mcp(int = "Tukey"))
 summary(pairwise)
 ```
 
 ## Visualize data
 ```{r}
-newdat <- expand.grid(unique(mort_B23$Spp), unique(mort_B23$PopID), unique(mort_B23$Trt), unique(mort_B23$Block))
+newdat <- expand.grid(unique(mortB23$Spp), unique(mortB23$PopID), unique(mortB23$Trt), unique(mortB23$Block))
 plogis(predict(mort17))
-dim(mort_B23)
+dim(mortB23)
 predict(mort17, newdat)
-mort_B23$predicted <- plogis(predict(mort17))
+mortB23$predicted <- plogis(predict(mort17))
 
-ggplot(mort_B23, aes(x = PropDaysAlive, y = predicted)) +
+ggplot(mortB23, aes(x = PropDaysAlive, y = predicted)) +
   geom_point()
 
 # confint(mort17)
@@ -393,16 +397,16 @@ mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs +
               (1|Block) + (1|SampleID) + (1|Seatable), 
               family = binomial(),
               control = glmerControl(optimizer = "bobyqa"),
-              data = mort_B23)
+              data = mortB23)
 
 summary(mort1) # So it works with block ONLY. 
 
 # Extract and Plot.
-newdata = expand.grid(Spp = unique(mort_B23$Spp),
-                      Block = unique(mort_B23$Block),
-                      PopID = unique(mort_B23$PopID),
-                      Trt = unique(mort_B23$Trt),
-                      Time_hrs = unique(mort_B23$Time_hrs))
+newdata = expand.grid(Spp = unique(mortB23$Spp),
+                      Block = unique(mortB23$Block),
+                      PopID = unique(mortB23$PopID),
+                      Trt = unique(mortB23$Trt),
+                      Time_hrs = unique(mortB23$Time_hrs))
 survival = predict(mort1,newdata)
 newdata$survival = plogis(survival)
 
@@ -417,31 +421,31 @@ ggplot(newdata, aes(x = Time_hrs, y = survival, group = group,shape = Trt, colou
 
 #mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
 #               family = binomial(),
-#               data = mort_B23,
+#               data = mortB23,
 #               control = glmerControl(optimizer = "bobyqa"))
 
 #mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable),
 #               family = binomial(),
-#               data = mort_B23,
+#               data = mortB23,
 #               control = glmerControl(optimizer = "bobyqa"))
 
 #mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block),
 #               family = binomial(),
-#               data = mort_B23,
+#               data = mortB23,
 #               control = glmerControl(optimizer = "bobyqa"))
 
 #mort1 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID:Seatable),
 #               family = binomial(),
-#               data = mort_B23,
+#               data = mortB23,
 #               control = glmerControl(optimizer = "bobyqa"))
 
 #mort1 <- bglmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
 #               family = binomial(),
-#               data = mort_B23)
+#               data = mortB23)
 
 mort2 <- glmer(cbind(Alive, Dead) ~ Spp + PopID + Trt + Time_hrs + (1|Block) + (1|Seatable) + (1|SampleID),
                family = binomial(),
-               data = mort_B23,
+               data = mortB23,
                control = glmerControl(optimizer = "bobyqa",
                                       optCtrl = list(maxfun = 10000),
                                       tol = 0.001))
@@ -455,7 +459,7 @@ aa_maximal <- allFit(mort2)
 ```{r}
 # Just for funsies - look at data in proportion format
 
-littmort <- mort_B23 %>%
+littmort <- mortB23 %>%
   group_by(PopID,Spp,Trt,Time_hrs,Block)%>%
   summarize(surv = sum(Alive,na.rm=TRUE),
             totalsnail = n())
@@ -473,7 +477,7 @@ require(rjags)
 require(lattice)
 
 # Bernoulli
-df2 <- mort_B23 %>% transform(id=as.numeric(factor(SampleID))) %>%
+df2 <- mortB23 %>% transform(id=as.numeric(factor(SampleID))) %>%
   transform(block = as.numeric(factor(Block))) %>%
   transform(seat = as.numeric(factor(Seatable))) %>%
   transform(time = as.numeric(factor(Time_hrs)))#transforms into numeric
