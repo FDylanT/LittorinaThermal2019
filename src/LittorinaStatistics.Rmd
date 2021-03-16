@@ -351,6 +351,8 @@ AIC(mortJ.2) #451.9
 AIC(mortJ.3) #447.4
 AIC(mortJ.4) #445.7
 
+mortH <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
+
 summary(mortH)
 
 # resid dev = 296.26

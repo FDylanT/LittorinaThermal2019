@@ -1,0 +1,52 @@
+---
+title: "LittorinaStatistics"
+author: "Ffion Titmuss"
+date: "3/24/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+setwd("~/Repos/LittorinaThermal2019")
+
+## Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lme4)
+library(car)
+library(bbmle)
+library(lsmeans)
+library(brglm)
+library(multcomp)
+```
+
+## Load data
+```{r}
+litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
+ rename(Spp = Genus_Species)
+
+mortB23 <- litt %>%
+  filter(PreTrtMortNotes == "") %>% # remove larvae that died during acclimation or were misidentified
+  filter(Block == 2 | Block == 3) %>%
+  mutate(Block = as.factor(Block)) %>%
+  mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
+  mutate(DaysDead = 2 - DaysAlive) %>%
+  mutate(PropDaysAlive = DaysAlive/2) %>%
+  factor(mortB23$Trt, levels = c("NT", "CS", "HS"))
+```
+
+```{r}
+mortModel <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
+
+summary(mortH)
+
+# resid dev = 296.26
+# resid df = 343
+
+# Diagnostic plots for outliers and intercorrelation
+  par(mfrow = c(2, 2))
+  plot(mortH)
+  # RESULT: 
+  par(mfrow = c(1, 1))
+```
