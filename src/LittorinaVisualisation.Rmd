@@ -12,20 +12,19 @@ setwd("~/Repos/LittorinaThermal2019")
 ## Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(tidyverse)
 ```
 
 ## Load data
 ```{r}
-litt <- read.csv("./data/LittorinaData.csv")
-resp <- read.csv("./data/RespirationData.csv")
+litt <- read.csv("./data/LittorinaData.csv") %>%
+  rename(Spp = Genus_Species)
 
 mortData <- litt %>%
-  rename(Spp = Genus_Species) %>%
   mutate(Spp = replace(Spp, Spp == "littorina_littorea", "LL")) %>%
   mutate(Spp = replace(Spp, Spp == "littorina_obtusata", "LO")) %>%
   mutate(Spp = replace(Spp, Spp == "littorina_saxatilis", "LS")) %>%
-  mutate(SampleID = as.character(SampleID)) %>%
   mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS")))
 ```
 
@@ -37,7 +36,7 @@ mortB23_ungrouped <- mortData %>%
   filter(Block == 2 | Block == 3) %>%
   mutate(Block = as.factor(Block))
 
-mortB23 <- mortB23_ungrouped %>%
+mortB23_grouped <- mortB23_ungrouped %>%
   rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
   mutate("0" = TRUE) %>%
   gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
@@ -48,11 +47,74 @@ mortB23 <- mortB23_ungrouped %>%
   group_by(Spp, PopID, Trt, Time_hrs) %>%
   summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int), Percent_Surv = mean(Percent), StdErr = sd(Percent)/length(Percent))
 
-ggplot(mortB23, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
+ggplot(mortB23_grouped, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 2.5) +
+  labs(x = "Hours", y = "Percent Survival", title = "Post-Exposure Survival") +
+  ylim(0, 1) +
+  scale_x_continuous(breaks = c(0, 24, 48)) +
+  scale_shape_manual(name = "Population", labels = c("Northern", "Southern"), values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1), linetype = guide_legend(order = 1)) +
+  facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
+
+## Plot by individual block
+```{r}
+mortB2 <- mortB23_ungrouped %>%
+  filter(Block == 2) %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  mutate(Percent = Surv_Int/Tot_Int) %>%
+  group_by(Spp, PopID, Trt, Time_hrs) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int), Percent_Surv = mean(Percent), StdErr = sd(Percent)/length(Percent))
+
+ggplot(mortB2, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
   geom_line() +
   geom_point() +
   geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.5) +
-  labs(x = "Hours", y = "Percent Survival", title = "Post-Exposure Survival") +
+  labs(x = "Hours", y = "Percent Survival", title = "Block A Post-Exposure Survival") +
+  ylim(0, 1) +
+  scale_x_continuous(breaks = c(0, 24, 48)) +
+  scale_shape_manual(name = "Population", labels = c("Northern", "Southern"), values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1), linetype = guide_legend(order = 1)) +
+  facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+
+mortB3 <- mortB23_ungrouped %>%
+  filter(Block == 3) %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  mutate(Percent = Surv_Int/Tot_Int) %>%
+  group_by(Spp, PopID, Trt, Time_hrs) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int), Percent_Surv = mean(Percent), StdErr = sd(Percent)/length(Percent))
+
+ggplot(mortB3, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.5) +
+  labs(x = "Hours", y = "Percent Survival", title = "Block B Post-Exposure Survival") +
   ylim(0, 1) +
   scale_x_continuous(breaks = c(0, 24, 48)) +
   scale_shape_manual(name = "Population", labels = c("Northern", "Southern"), values = c(19, 1)) +
@@ -69,7 +131,7 @@ ggplot(mortB23, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, T
 
 ## Plot gradient variation
 ```{r}
-mortB23_24 <- mortB23 %>%
+mortB23_24 <- mortB23_grouped %>%
   filter(Trt == "HS" | Trt == "CS") %>%
   mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
   filter(Time_hrs == 24)
@@ -77,6 +139,7 @@ mortB23_24 <- mortB23 %>%
 ggplot(mortB23_24, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)) +
   geom_point() +
   geom_line() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
   ylim(0, 1) +
   labs(x = "Environment", y = "Percent Survival", title = "Post-Exposure (24h) Survival by Environment") +
   scale_x_discrete(labels = c("Cold", "Hot")) +
@@ -88,7 +151,7 @@ ggplot(mortB23_24, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)
         axis.line = element_line(colour = "black"),
         strip.text = element_text(face = "italic"))
 
-mortB23_48 <- mortB23 %>%
+mortB23_48 <- mortB23_grouped %>%
   filter(Trt == "HS" | Trt == "CS") %>%
   mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
   filter(Time_hrs == 48)
@@ -96,6 +159,7 @@ mortB23_48 <- mortB23 %>%
 ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)) +
   geom_point() +
   geom_line() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
   ylim(0, 1) +
   labs(x = "Environment", y = "Percent Survival", title = "Post-Exposure (48h) Survival by Environment") +
   scale_x_discrete(labels = c("Cold", "Hot")) +
@@ -121,88 +185,6 @@ ggplot(sizeMort, aes(x = WetWeight, fill = Trt)) +
   geom_histogram() +
   facet_grid(DaysAlive ~ ., switch = "y") +
   labs(x = "Wet Weight (g)", y = "Days Alive", title = "Survival vs. Weight") +
-  scale_fill_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.line = element_line(colour = "black"))
-
-## Facet by Spp
-
-ggplot(sizeMort, aes(x = WetWeight, fill = Trt)) +
-  geom_histogram() +
-  facet_grid(DaysAlive ~ Spp, switch = "y", labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
-  labs(x = "Wet Weight (g)", y = "Days Alive", title = "Survival vs. Weight") +
-  scale_fill_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.line = element_line(colour = "black"),
-        strip.text.x = element_text(face = "italic"))
-
-sizeMortLL <- sizeMort %>%
-  filter(Spp == "LL")
-
-ggplot(sizeMortLL, aes(x = WetWeight, fill = Trt)) +
-  geom_histogram() +
-  facet_grid(DaysAlive ~ ., switch = "y") +
-  labs(x = "Wet Weight (g)", y = "Days Alive", title = "L. littorea Survival vs. Weight") +
-  scale_fill_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.line = element_line(colour = "black"))
-
-sizeMortLO <- sizeMort %>%
-  filter(Spp == "LO")
-
-ggplot(sizeMortLO, aes(x = WetWeight, fill = Trt)) +
-  geom_histogram() +
-  facet_grid(DaysAlive ~ ., switch = "y") +
-  labs(x = "Wet Weight (g)", y = "Days Alive", title = "L. obtusata Survival vs. Weight") +
-  scale_fill_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.line = element_line(colour = "black"))
-
-sizeMortLS <- sizeMort %>%
-  filter(Spp == "LS")
-
-ggplot(sizeMortLS, aes(x = WetWeight, fill = Trt)) +
-  geom_histogram() +
-  facet_grid(DaysAlive ~ ., switch = "y") +
-  labs(x = "Wet Weight (g)", y = "Days Alive", title = "L. saxatilis Survival vs. Weight") +
-  scale_fill_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.line = element_line(colour = "black"))
-```
-
-## Plot size vs. mortality (w/o control)
-```{r}
-sizeMort <- mortB23_ungrouped %>%
-  filter(Trt != "NT") %>%
-  mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
-  mutate(DaysAlive = as.factor(DaysAlive))
-
-sizeMort$DaysAlive <- factor(sizeMort$DaysAlive, levels = c(2, 1, 0))
-
-ggplot(sizeMort, aes(x = WetWeight, fill = Trt)) +
-  geom_histogram() +
-  facet_grid(DaysAlive ~ ., switch = "y") +
-  labs(x = "Wet Weight (g)", y = "Days Alive", title = "Survival vs. Weight") +
   scale_fill_manual(name = "Treatment", labels = c("Heat", "Cold"), values = c("orangered", "dodgerblue")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -225,6 +207,8 @@ ggplot(sizeMort, aes(x = WetWeight, fill = Trt)) +
         axis.ticks.y = element_blank(),
         axis.line = element_line(colour = "black"),
         strip.text.x = element_text(face = "italic"))
+
+## Plot by Spp
 
 sizeMortLL <- sizeMort %>%
   filter(Spp == "LL")
@@ -274,6 +258,8 @@ ggplot(sizeMortLS, aes(x = WetWeight, fill = Trt)) +
 
 ## Plot mortality with respect to respiration
 ```{r}
+resp <- read.csv("./data/RespirationData.csv")
+
 respData <- resp %>%
   filter(!is.na(Block)) %>%
   rename(MaxRate = MaxRespRate_umolO2.hr) %>%
@@ -288,6 +274,8 @@ mortResp <- mortResp_all %>%
   mutate(DaysAlive = as.factor(DaysAlive))
 
 mortResp$DaysAlive <- factor(mortResp$DaysAlive, levels = c(2, 1, 0))
+
+### Add sample sizes to these plots before using
 
 ggplot(mortResp, aes(x = RespPerG, fill = Trt)) +
   geom_histogram() +
@@ -315,8 +303,6 @@ ggplot(mortResp, aes(x = RespPerG, fill = Trt)) +
         axis.ticks.y = element_blank(),
         axis.line = element_line(colour = "black"),
         strip.text.x = element_text(face = "italic"))
-
-### Add sample sizes to plot below
 
 ggplot(mortResp, aes(x = TrtDay2_Survived, y = RespPerG, colour = Trt, linetype = PopID)) +
   geom_boxplot(position = position_dodge2(preserve = "single")) +

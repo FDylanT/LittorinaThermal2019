@@ -1,7 +1,7 @@
 ---
-title: "LittorinaStatistics"
+title: "LittorinaStatsClean"
 author: "Ffion Titmuss"
-date: "3/24/2020"
+date: "3/16/2021"
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -12,41 +12,79 @@ setwd("~/Repos/LittorinaThermal2019")
 ## Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(tidyverse)
-library(lme4)
-library(car)
-library(bbmle)
-library(lsmeans)
-library(brglm)
-library(multcomp)
+library(brglm2)
 ```
 
 ## Load data
 ```{r}
-litt <- read.csv("./data/LittorinaData.csv", header = TRUE) %>%
- rename(Spp = Genus_Species)
+litt <- read.csv("./data/LittorinaData.csv") %>%
+  rename(Spp = Genus_Species)
 
 mortB23 <- litt %>%
-  filter(PreTrtMortNotes == "") %>% # remove larvae that died during acclimation or were misidentified
+  filter(PreTrtMortNotes == "") %>% # remove snails that died during acclimation or were misidentified
+  filter(WetWeight <= 1) %>% # remove size outliers
   filter(Block == 2 | Block == 3) %>%
+  mutate(Block = replace(Block, Block == 2, "A"), Block = replace(Block, Block == 3, "B")) %>%
   mutate(Block = as.factor(Block)) %>%
   mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
   mutate(DaysDead = 2 - DaysAlive) %>%
   mutate(PropDaysAlive = DaysAlive/2) %>%
-  factor(mortB23$Trt, levels = c("NT", "CS", "HS"))
+  mutate(Trt = factor(Trt, levels = c("NT", "CS", "HS")))
 ```
 
+## Final model
 ```{r}
 mortModel <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
 
-summary(mortH)
+summary(mortModel)
+```
 
-# resid dev = 296.26
-# resid df = 343
+## Look at model matrix
+```{r}
+matrix <- model.matrix(mortModel)
+# Intercept: L. littorea / MA / control / block A
 
-# Diagnostic plots for outliers and intercorrelation
-  par(mfrow = c(2, 2))
-  plot(mortH)
-  # RESULT: 
-  par(mfrow = c(1, 1))
+trtCombos <- mortB23 %>%
+  group_by(Spp, PopID, Trt, Block) %>%
+  summarize(Height = mean(ShellHeight)) %>%
+  subset(select = -Height)
+
+matrix2 <- model.matrix(~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, trtCombos) %>%
+  as.data.frame()
+
+matrix3 <- cbind(trtCombos, matrix2)
+```
+
+## Look at significance
+
+### Control, LL vs LO
+```{r}
+mortModel2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(PopID = contr.sum, Block = contr.sum))
+
+summary(mortModel2)
+```
+
+### Control, LO-N vs LO-S
+```{r}
+mortB23$Spp <- factor(mortB23$Spp, levels=c("littorina_obtusata", "littorina_littorea", "littorina_saxatilis"), ordered = TRUE)
+str(mortB23$Spp)
+
+mortModel3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts=list(Block = contr.sum))
+
+summary(mortModel3)
+```
+
+### Cold, LS-N vs LS-S
+```{r}
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_saxatilis", "littorina_obtusata", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+mortB23$Trt <- factor(mortB23$Trt, levels = c("CS", "HS", "NT"), ordered = TRUE)
+str(mortB23$Trt)
+
+mortModel4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts=list(Block = contr.sum))
+
+summary(mortModel4)
 ```
