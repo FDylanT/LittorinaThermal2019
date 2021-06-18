@@ -51,7 +51,7 @@ ggplot(mortB23_grouped, aes(x = Time_hrs, y = Percent_Surv, group = interaction(
   geom_line() +
   geom_point() +
   geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 2.5) +
-  labs(x = "Hours", y = "Percent Survival", title = "Post-Exposure Survival") +
+  labs(x = "Hours", y = "Percent Survival") +
   ylim(0, 1) +
   scale_x_continuous(breaks = c(0, 24, 48)) +
   scale_shape_manual(name = "Population", labels = c("Northern", "Southern"), values = c(19, 1)) +
@@ -161,7 +161,7 @@ ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)
   geom_line() +
   geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
   ylim(0, 1) +
-  labs(x = "Environment", y = "Percent Survival", title = "Post-Exposure (48h) Survival by Environment") +
+  labs(x = "Environment", y = "Percent Survival") +
   scale_x_discrete(labels = c("Cold", "Hot")) +
   scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
   facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +

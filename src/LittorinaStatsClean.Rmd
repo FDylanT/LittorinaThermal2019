@@ -27,16 +27,18 @@ mortB23 <- litt %>%
   filter(WetWeight <= 1) %>% # remove size outliers
   filter(Block == 2 | Block == 3) %>%
   mutate(Block = replace(Block, Block == 2, "A"), Block = replace(Block, Block == 3, "B")) %>%
-  mutate(Block = as.factor(Block)) %>%
   mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
   mutate(DaysDead = 2 - DaysAlive) %>%
   mutate(PropDaysAlive = DaysAlive/2) %>%
-  mutate(Trt = factor(Trt, levels = c("NT", "CS", "HS")))
+  mutate(Spp = as.factor(Spp)) %>%
+  mutate(PopID = as.factor(PopID)) %>%
+  mutate(Trt = factor(Trt, levels = c("NT", "CS", "HS"))) %>%
+  mutate(Block = as.factor(Block))
 ```
 
 ## Final model
 ```{r}
-mortModel <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
+mortModel <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), method = "brglm_fit")
 
 summary(mortModel)
 ```
@@ -59,32 +61,218 @@ matrix3 <- cbind(trtCombos, matrix2)
 
 ## Look at significance
 
-### Control, LL vs LO
+### In control conditions, are there overall spp differences?
 ```{r}
-mortModel2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(PopID = contr.sum, Block = contr.sum))
+# littorea - obtusata
+# littorea - saxatilis
 
-summary(mortModel2)
-```
-
-### Control, LO-N vs LO-S
-```{r}
-mortB23$Spp <- factor(mortB23$Spp, levels=c("littorina_obtusata", "littorina_littorea", "littorina_saxatilis"), ordered = TRUE)
 str(mortB23$Spp)
-
-mortModel3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts=list(Block = contr.sum))
-
-summary(mortModel3)
-```
-
-### Cold, LS-N vs LS-S
-```{r}
-mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_saxatilis", "littorina_obtusata", "littorina_littorea"), ordered = TRUE)
-str(mortB23$Spp)
-
-mortB23$Trt <- factor(mortB23$Trt, levels = c("CS", "HS", "NT"), ordered = TRUE)
 str(mortB23$Trt)
 
-mortModel4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts=list(Block = contr.sum))
+m2 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
 
-summary(mortModel4)
+summary(m2)
+
+# obtusata - saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_obtusata", "littorina_saxatilis", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+m3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
+
+summary(m3)
 ```
+
+### In control conditions, are there overall population differences?
+```{r}
+m4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m4)
+```
+
+### In control conditions, what is the difference between populations within a spp?
+```{r}
+# littorea
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_littorea", "littorina_obtusata", "littorina_saxatilis"), ordered = TRUE)
+str(mortB23$Spp)
+
+m5 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m5)
+
+# obtusata
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_obtusata", "littorina_saxatilis", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+m6 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m6)
+
+# saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_saxatilis", "littorina_littorea", "littorina_obtusata"), ordered = TRUE)
+str(mortB23$Spp)
+
+m7 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m7)
+```
+
+### In heat conditions, are there overall spp differences?
+```{r}
+# littorea - obtusata
+# littorea - saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_littorea", "littorina_obtusata", "littorina_saxatilis"), ordered = TRUE)
+str(mortB23$Spp)
+
+mortB23$Trt <- factor(mortB23$Trt, levels = c("HS", "CS", "NT"), ordered = TRUE)
+str(mortB23$Trt)
+
+m8 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
+
+summary(m8)
+
+# obtusata - saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_obtusata", "littorina_saxatilis", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+m9 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
+
+summary(m9)
+```
+
+### In heat conditions, are there overall population differences?
+```{r}
+m10 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m10)
+```
+
+### In heat conditions, what is the difference between populations within a spp?
+```{r}
+# littorea
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_littorea", "littorina_obtusata", "littorina_saxatilis"), ordered = TRUE)
+str(mortB23$Spp)
+
+m11 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m11)
+
+# obtusata
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_obtusata", "littorina_saxatilis", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+m12 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m12)
+
+# saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_saxatilis", "littorina_littorea", "littorina_obtusata"), ordered = TRUE)
+str(mortB23$Spp)
+
+m13 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m13)
+```
+
+### In cold conditions, are there overall spp differences?
+```{r}
+# littorea - obtusata
+# littorea - saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_littorea", "littorina_obtusata", "littorina_saxatilis"), ordered = TRUE)
+str(mortB23$Spp)
+
+mortB23$Trt <- factor(mortB23$Trt, levels = c("CS", "NT", "HS"), ordered = TRUE)
+str(mortB23$Trt)
+
+m14 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
+
+summary(m14)
+
+# obtusata - saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_obtusata", "littorina_saxatilis", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+m15 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
+
+summary(m15)
+```
+
+### In cold conditions, are there overall population differences?
+```{r}
+m16 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m16)
+```
+
+### In cold conditions, what is the difference between populations within a spp?
+```{r}
+# littorea
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_littorea", "littorina_obtusata", "littorina_saxatilis"), ordered = TRUE)
+str(mortB23$Spp)
+
+m17 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m17)
+
+# obtusata
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_obtusata", "littorina_saxatilis", "littorina_littorea"), ordered = TRUE)
+str(mortB23$Spp)
+
+m18 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m18)
+
+# saxatilis
+
+mortB23$Spp <- factor(mortB23$Spp, levels = c("littorina_saxatilis", "littorina_littorea", "littorina_obtusata"), ordered = TRUE)
+str(mortB23$Spp)
+
+m19 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m19)
+```
+
+### Alternate method
+
+litt_HS <- mortB23 %>%
+  filter(Spp == "littorina_littorea") %>%
+  filter(Trt == "HS")
+
+m11.1 <- brglm(cbind(DaysAlive, DaysDead) ~ PopID * Block, data = litt_HS, family = binomial(link = "logit"), contrasts = list(PopID = contr.treatment, Block = contr.sum))
+
+summary(m11.1)
+
+CS <- mortB23 %>%
+  filter(Trt == "CS")
+
+m16.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Block, data = CS, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Block = contr.sum))
+
+summary(m16.1)
+
+litt_CS <- mortB23 %>%
+  filter(Spp == "littorina_littorea") %>%
+  filter(Trt == "CS")
+
+m17.1 <- brglm(cbind(DaysAlive, DaysDead) ~ PopID * Block, data = litt_CS, family = binomial(link = "logit"), contrasts = list(PopID = contr.treatment, Block = contr.sum))
+
+summary(m17.1)
+
+obt_CS <- mortB23 %>%
+  filter(Spp == "littorina_obtusata") %>%
+  filter(Trt == "CS")
+
+m18.1 <- brglm(cbind(DaysAlive, DaysDead) ~ PopID * Block, data = obt_CS, family = binomial(link = "logit"), contrasts = list(PopID = contr.treatment, Block = contr.sum))
+
+summary(m18.1)

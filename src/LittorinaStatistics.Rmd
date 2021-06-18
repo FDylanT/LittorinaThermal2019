@@ -212,7 +212,7 @@ summary(mort15)
 
 ## Try bias-reduced glm
 ```{r}
-mort17 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"))
+mort17 <- glm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), method = "brglm_fit")
 
 summary(mort17)
 plot(mort17)
@@ -601,7 +601,7 @@ ggplot(out_dat2, aes(x = factor(Time), y = mean, group = group ,shape = factor(T
 
 ## Good - this resembles our raw data plot and the plot from the mort1 predicted values. 
 
-## We can PROBABLY incorporate more random effects into this model now that i have it working. Talk it over with Katie to figure out the best next steps. Like I mentioned- Bayesian is MOTHER FUCKING COOL (and fun) but may not be the best for your purposes because its harder to test significance. If Katie is okay with just having a block effect as the only random effect, the glmer approach might be easiest. But if you want to add any other random effects, then we'll have to use the Bayesian approach to estimate your parameters. I will help you through it if thats the route you decide - but this is a good first step in introducing you to the bones of how bayesian models work. If you don't use this - no worries! Its been a fun reminder for myself. 
+## We can PROBABLY incorporate more random effects into this model now that i have it working. Talk it over with Katie to figure out the best next steps. Like I mentioned- Bayesian is MOTHER FUCKING COOL (and fun) but may not be the best for your purposes because its harder to test significance. If Katie is okay with just having a block effect as the only random effect, the glmer approach might be easiest. But if you want to add any other random effects, then we'll have to use the Bayesian approach to estimate your parameters. I will help you through it if thats the route you decide - but this is a good first step in introducing you to the bones of how bayesian models work. If you don't use this - no worries! It's been a fun reminder for myself. 
 
 
 ```

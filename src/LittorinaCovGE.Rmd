@@ -1,0 +1,236 @@
+---
+title: "Littorina CovGE"
+author: "Molly Albecker"
+date: "4/8/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+setwd("~/Repos/LittorinaThermal2019")
+
+Here we provide an example for the covariance analysis. We use the dataset on amphibian (frog) development that was provided by Albecker and McCoy 2019 and is an example presented in the paper. 
+
+First steps are to load the data and the functions. These are available on the Github (https://github.com/RCN-ECS/CnGV/tree/master/src/)
+```{r}
+
+# Packages
+if (!require('lme4')) install.packages('lme4'); library('lme4')
+if (!require('emmeans')) install.packages('emmeans'); library('emmeans')
+if (!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
+
+# Functions (may need to change your working directory)
+source("./src/CovarianceDataFunctions.R")
+
+# Overall Dataset
+snail1 = read.csv("./data/LittorinaData.csv")
+
+```
+
+Let's format the data! I'm going to separate these out into different datasets for each species. I will also add/rename columns just so they work in the functions. 
+
+gen_factor = population (genotype), 
+exp_env_factor = experimental treatment, 
+nat_env_factor = native environment
+
+We also need to ensure the data are formatted for the analysis. We use an ANOVA to extract estimated marginal means for each genotype and environmental mean (yi and yj in CovGE equation), which requires that fixed effects (genotype and environment) are categorical. 
+
+Finally, we'll analyze each phenotype and species differently. I've set up the code below so you can switch out names in the pipe and run it all). Because you measured the phenotype across 3 species, you should end up with 3 CovGE estimates :) 
+
+```{r}
+
+# Exclude block 1 and control treatments (only want data from environments that have a corresponding "genotype" )
+snail1$gen_factor = snail1$exp_env_factor = snail1$nat_env_factor = snail1$phen_data = NULL
+snail = snail1 %>% 
+  filter(Block != 1) %>% 
+  filter(Trt != "NT") %>%
+  mutate(nat_env_factor = ifelse(PopID == "MA", "Cold", "Warm")) %>%
+  #rename(gen_factor = PopID) %>%
+  mutate(exp_env_factor = ifelse(Trt == "CS", "Cold", "Warm")) %>%
+  mutate(nat_env_factor = as.factor(nat_env_factor))%>%
+  mutate(gen_factor = ifelse(PopID == "MA", "Cold", "Warm"))%>%
+  mutate(exp_env_factor = as.factor(exp_env_factor)) %>%
+  mutate(gen_factor = as.factor(gen_factor)) %>%
+  mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
+  mutate(DaysDead = 2 - DaysAlive) %>%
+  mutate(PropDaysAlive = DaysAlive/2) %>%
+  rename(phen_data = PropDaysAlive) %>%
+  filter(Genus_Species == "littorina_saxatilis")  ### Here is where you sub in "littorina_saxatilis", "littorina_obtusata", or "littorina_littorea" to run the three species through
+
+```
+
+
+##### Standardize data: 
+
+We standardize the phenotypic data by subtracting the overall mean phenotype from each phenotypic datapoint and dividing by the standard deviation of group means (group = genotype and experimental environment pair).
+
+```{r}
+ 
+snail$group = paste(snail$gen_factor,snail$exp_env_factor,sep = "-")
+snail$phen_corrected = (snail$phen_data - mean(snail$phen_data, na.rm = TRUE))/sd(tapply(snail$phen_data, snail$group, mean, na.rm = TRUE))
+
+```
+
+## Calculate CovGE: 
+
+To start out, we ran a basic categorical linear model to generate yi and yj parameters via estimated marginal means. Estimated marginal means are more robust given unbalanced study designs.   
+
+After running the model, we extract estimated marginal means using function emmeans(). 
+
+```{r}
+  
+# Anova
+aov.test <- lm(phen_corrected ~ exp_env_factor * gen_factor, data = snail) 
+
+# Estimated Marginal Means
+emm_df = as.data.frame(emmeans(aov.test, ~ exp_env_factor*gen_factor))
+
+```
+This gives us the matrix of yij that will be used for GxE. But for CovGE, we next we need to calculate yi (genotypic means) and yj (experimental environment means). 
+
+We do this using tapply() to calculate the mean phenotype for each genotype ACROSS environments (G_matrix), and then the mean phenotype for each environment ACROSS genotypes (E_matrix).
+
+Because this is a common garden design, there should be more genotypic means than environmental means.
+```{r}
+
+G_matrix <- data.frame("G_means" = tapply(emm_df$emmean, emm_df$gen_factor, mean, na.rm=TRUE),
+                       "gen_factor" = unique(emm_df$gen_factor))
+
+E_matrix <- data.frame("E_means" = tapply(emm_df$emmean, emm_df$exp_env_factor, mean, na.rm=TRUE),
+                       "exp_env_factor" = unique(emm_df$exp_env_factor))
+
+```
+ 
+To match each genotypic mean with the correct environmental mean, we have to ensure genotypes are correctly matched to their native environment. This is what the "I" term in the CovGE equation refers to. 
+
+Because there are more genotypes than environments, environments will be used more than once. 
+```{r} 
+# First create Native Environment reference dataframe 
+native_df = data.frame("gen_factor" = unique(snail$gen_factor))
+native_df$nat_env_factor = snail$nat_env_factor[match(native_df$gen_factor, snail$gen_factor)]
+
+# Reorder Gmatrix and Ematrix to reflect the above native environments 
+Cov_matrix = G_matrix
+Cov_matrix$exp_env_factor = native_df$nat_env_factor[match(G_matrix$gen_factor,native_df$gen_factor)] # Indicator Variable
+Cov_matrix$E_means = E_matrix$E_means[match(Cov_matrix$exp_env_factor,E_matrix$exp_env_factor)]
+
+```
+
+Now we have the data formatted so that we can calculate CovGE. 
+
+```{r}
+N = length(Cov_matrix$gen_factor) # Length of number of genotypes
+overallmean = mean(emm_df$emmean,na.rm=TRUE) # ybar (overall mean phenotype across all genotypes and environments)
+numerator = sum((Cov_matrix$G_means - overallmean)*(Cov_matrix$E_means - overallmean)) # Follows Numerator in CovGE. 
+  
+standardize_max = max(var(Cov_matrix$E_means),var(Cov_matrix$G_means)) # standardize CovGE by max variance of either Gmeans or Emeans
+CovGE = (1/(N-1))*(numerator/standardize_max) 
+CovGE
+```
+
+Woah - for Littorina saxatilis - I'm getting a reading of -0.9954! THAT'S REALLY STRONG COUNTERGRADIENT VARIATION! Let's get confidence intervals and P-values next.
+
+
+## Bootstrapped Confidence Intervals
+
+To estimate confidence intervals, we use bootstrapping, in which we shuffle phenotype within each genotype/environment and recalculate covGE after each reshuffle. This generates a distribution of CovGE estimates that form 95% confidence intervals. 
+
+For this step, I am going to use imported functions that do the same thing as shown above.
+"bootstrap_raw" function shuffles the raw datadata,
+"mod.GxE" function compiles the cov_matrix dataframe
+"cov.function" function calculates CovGE
+
+```{r}
+n_boot <- 999 # You probably want to run 999 runs when you run this for your thesis. It takes a lot of time though so I've shortened it for time.
+balanced = TRUE   # Don't worry about this - your data is fine, but this would be in case your data were unbalanced (different numbers of genotypes)
+
+boot_dat_raw = boot_df_raw = data.frame()
+    
+for(i in 1:n_boot){
+      
+  # Shuffle Data
+  shuffle_dat <- bootstrap_raw(snail) 
+  
+  # Anova model fit & GxE estimates
+  m2 <- mod.Cov(shuffle_dat,balanced) # Insert shuffled raw phenotype dataframe
+  
+  # Pull info from mod.Cov output
+  cov_matrix_boot <- m2[[1]]
+  
+  # Covariance Estimates
+  cov_corrected_boot = round(cov.function(cov_matrix_boot, balanced),3)
+  
+  # Bootstrap dataframe
+  boot_dat_raw <- data.frame("covariance_boot" = cov_corrected_boot)
+  boot_df_raw <- rbind(boot_df_raw,boot_dat_raw)
+}
+    
+# Check: Histograms of distribution around CovGE (sanity check)
+ggplot(boot_df_raw, aes(x = covariance_boot), alpha = 0.5)+  geom_histogram()+ geom_vline(aes(xintercept = CovGE))+
+  ggtitle("Bootstrapped CovGE values")
+    
+    
+# Covariance Confidence Intervals 
+cov_CI = quantile(boot_df_raw$covariance_boot, probs=c(0.025, 0.975), type=1) 
+cov_CI    
+
+```
+Alright!  95% Confidence intervals! Let's see if it's significant using permutation. 
+
+
+## Hypothesis Testing using Permutation
+
+For hypothesis testing, we used permutation. Permutation also resamples phenotypic data but does not resample or maintain the genotypic/environmental levels. As a result, it creates a distribution around the null expectation that CovGE = 0. If the CovGE estimate (-0.42) is outside of the tails of this null distribution, it is considered statistically significant. 
+
+Again, I will used some canned functions that simply speed up the above CovGE calculation.
+"permutation_raw" permutes data.
+"mod.Cov" again takes those permuted data and generates Cov_matrix dataframes
+"cov.function" calculates CovGE of permuted data
+
+
+```{r}
+
+# Output dataframe
+perm_df_raw = perm_dat_raw = data.frame()
+    
+for(i in 1:n_boot){
+  
+  # Resample Data
+  perm_dat <- permutation_raw(snail)
+  
+  # Anova model fit & GxE estimates
+  m3 <- mod.Cov(perm_dat, balanced) # Insert permuted data
+  
+  # GxE Estimates
+  cov_matrix_perm <- m3[[1]]
+
+  # Covariance Estimates
+  cov_corrected_perm = round(cov.function(cov_matrix_perm, balanced),3)
+  
+  # Permutation dataframe
+  perm_dat_raw <- data.frame("covariance_perm" = cov_corrected_perm)
+  perm_df_raw <- rbind(perm_df_raw,perm_dat_raw)
+}
+
+# Check: Permutation histogram - should be around zero
+ggplot(perm_df_raw, aes(x = covariance_perm), alpha = 0.5)+ geom_histogram()  + ggtitle("Null Distribution for CovGE") # Should be centered around 0
+```
+
+Now to calculate the p-value from this null distribution: 
+```{r}
+# Covariance P-values
+cov_pvalue <- sum(abs(perm_df_raw$covariance_perm) >= abs(CovGE))/(n_boot+1) # Two-tailed
+cov_pvalue     
+```
+
+Congratulations! You have estimated CovGE, 95% confidence intervals, and the P-value for your snail data. To report these results, you would say something like... 
+
+(At least for the Littorina saxatilis data):  Littorina saxatilis exhibited significant countergradient variation in percent survival (CovGE = -0.995 (C.I. -1.000 to -0.299); P-value = 0.01). 
+
+You can fill in the following table with results from these analyses: 
+
+| Species | CovGE | 95% CI | P-value |
+| --- | --- | --- | --- |
+| Littorina littorea | -0.010 | -0.265 - 0.242 | 0.985 |
+| Littorina obtusata | -0.750 | -0.982 - -0.001 | 0.166 |
+| Littorina saxatilis | -0.995 | -1.000 - -0.299 | 0.014 |

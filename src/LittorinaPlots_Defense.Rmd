@@ -1,0 +1,113 @@
+---
+title: "LittorinaPlots_Defense"
+author: "Ffion Titmuss"
+date: "4/20/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+setwd("~/Repos/LittorinaThermal2019")
+
+## Load packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Load data
+```{r}
+litt <- read.csv("./data/LittorinaData.csv") %>%
+  rename(Spp = Genus_Species)
+
+mortData <- litt %>%
+  mutate(Spp = replace(Spp, Spp == "littorina_littorea", "LL")) %>%
+  mutate(Spp = replace(Spp, Spp == "littorina_obtusata", "LO")) %>%
+  mutate(Spp = replace(Spp, Spp == "littorina_saxatilis", "LS")) %>%
+  mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS")))
+```
+
+## Plot B2&3 mortality
+```{r}
+mortB23_ungrouped <- mortData %>%
+  filter(PreTrtMortNotes == "") %>%
+  filter(WetWeight <= 1) %>%
+  filter(Block == 2 | Block == 3) %>%
+  mutate(Block = as.factor(Block))
+
+mortB23_grouped <- mortB23_ungrouped %>%
+  rename("24" = TrtDay1_Survived, "48" = TrtDay2_Survived) %>%
+  mutate("0" = TRUE) %>%
+  gather("0", "24", "48", key = "Time_hrs", value = "Survived") %>%
+  mutate(Time_hrs = as.integer(Time_hrs),
+         Surv_Int = as.integer(Survived),
+         Tot_Int = 1) %>%
+  mutate(Percent = Surv_Int/Tot_Int) %>%
+  group_by(Spp, PopID, Trt, Time_hrs) %>%
+  summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int), Percent_Surv = mean(Percent), StdErr = sd(Percent)/length(Percent))
+
+##
+
+## Full
+ggplot(mortB23_grouped, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 2.5) +
+  labs(x = "Hours", y = "Percent Survival") +
+  ylim(0, 1) +
+  scale_x_continuous(breaks = c(0, 24, 48)) +
+  scale_shape_manual(name = "Population", labels = c("Northern", "Southern"), values = c(19, 1)) +
+  scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
+  scale_colour_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
+  guides(shape = guide_legend(order = 1), linetype = guide_legend(order = 1)) +
+  facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
+
+## Plot gradient variation
+```{r}
+mortB23_24 <- mortB23_grouped %>%
+  filter(Trt == "HS" | Trt == "CS") %>%
+  mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
+  filter(Time_hrs == 24)
+
+ggplot(mortB23_24, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
+  ylim(0, 1) +
+  labs(x = "Environment", y = "Percent Survival", title = "Post-Exposure (24h) Survival by Environment") +
+  scale_x_discrete(labels = c("Cold", "Hot")) +
+  scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
+  facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+
+mortB23_48 <- mortB23_grouped %>%
+  filter(Trt == "HS" | Trt == "CS") %>%
+  mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
+  filter(Time_hrs == 48)
+
+ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
+  ylim(0, 1) +
+  labs(x = "Environment", y = "Percent Survival") +
+  scale_x_discrete(labels = c("Cold", "Hot")) +
+  scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
+  facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.line = element_line(colour = "black"),
+        strip.text = element_text(face = "italic"))
+```
