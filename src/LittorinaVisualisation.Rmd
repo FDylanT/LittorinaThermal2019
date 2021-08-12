@@ -28,7 +28,7 @@ mortData <- litt %>%
   mutate(Trt = factor(Trt, levels = c("HS", "NT", "CS")))
 ```
 
-## Plot B2&3 mortality
+## Create B2&3 subset
 ```{r}
 mortB23_ungrouped <- mortData %>%
   filter(PreTrtMortNotes == "") %>%
@@ -46,7 +46,10 @@ mortB23_grouped <- mortB23_ungrouped %>%
   mutate(Percent = Surv_Int/Tot_Int) %>%
   group_by(Spp, PopID, Trt, Time_hrs) %>%
   summarise(Surv = sum(Surv_Int), Tot = sum(Tot_Int), Percent_Surv = mean(Percent), StdErr = sd(Percent)/length(Percent))
+```
 
+## Plot B2&3 mortality
+```{r}
 ggplot(mortB23_grouped, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
   geom_line() +
   geom_point() +
@@ -136,13 +139,14 @@ mortB23_24 <- mortB23_grouped %>%
   mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
   filter(Time_hrs == 24)
 
-ggplot(mortB23_24, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)) +
+ggplot(mortB23_24, aes(x = Trt, y = Percent_Surv, linetype = PopID, colour = PopID, group = PopID)) +
   geom_point() +
   geom_line() +
   geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
   ylim(0, 1) +
   labs(x = "Environment", y = "Percent Survival", title = "Post-Exposure (24h) Survival by Environment") +
   scale_x_discrete(labels = c("Cold", "Hot")) +
+  scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
   facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
   theme(panel.grid.major = element_blank(),
@@ -156,13 +160,14 @@ mortB23_48 <- mortB23_grouped %>%
   mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
   filter(Time_hrs == 48)
 
-ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)) +
+ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, linetype = PopID, colour = PopID, group = PopID)) +
   geom_point() +
   geom_line() +
   geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
   ylim(0, 1) +
   labs(x = "Environment", y = "Percent Survival") +
   scale_x_discrete(labels = c("Cold", "Hot")) +
+  scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
   facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
   theme(panel.grid.major = element_blank(),
@@ -174,7 +179,10 @@ ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, colour = PopID, group = PopID)
 
 ## Plot size vs. mortality
 ```{r}
-sizeMort <- mortB23_ungrouped %>%
+sizeMort <- mortData %>%
+  filter(PreTrtMortNotes == "") %>%
+  filter(Block == 2 | Block == 3) %>%
+  mutate(Block = as.factor(Block)) %>%
   filter(Trt != "NT") %>%
   mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
   mutate(DaysAlive = as.factor(DaysAlive))
@@ -248,6 +256,47 @@ ggplot(sizeMortLS, aes(x = WetWeight, fill = Trt)) +
   facet_grid(DaysAlive ~ ., switch = "y") +
   labs(x = "Wet Weight (g)", y = "Days Alive", title = "L. saxatilis Survival vs. Weight") +
   scale_fill_manual(name = "Treatment", labels = c("Heat", "Cold"), values = c("orangered", "dodgerblue")) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line = element_line(colour = "black"))
+
+# Only CS
+
+sizeMortCS <- mortData %>%
+  filter(PreTrtMortNotes == "") %>%
+  filter(Block == 2 | Block == 3) %>%
+  mutate(Block = as.factor(Block)) %>%
+  filter(Trt == "CS") %>%
+  mutate(DaysAlive = ifelse(TrtDay2_Survived == TRUE, 2, ifelse(TrtDay1_Survived == TRUE, 1, 0))) %>%
+  mutate(DaysAlive = as.factor(DaysAlive))
+
+sizeMortCS$DaysAlive <- factor(sizeMortCS$DaysAlive, levels = c(2, 1, 0))
+
+ggplot(sizeMortCS, aes(x = ShellHeight, fill = Trt)) +
+  geom_histogram() +
+  facet_grid(DaysAlive ~ ., switch = "y") +
+  labs(x = "Shell Height (mm)", y = "Number of Days Alive", title = "Survival vs. Size") +
+  scale_fill_manual(name = "Treatment", labels = "Cold", values = "dodgerblue") +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line = element_line(colour = "black"))
+
+# Only CS, only LL
+
+sizeMortLL_CS <- sizeMortCS %>%
+  filter(Spp == "LL")
+
+ggplot(sizeMortLL_CS, aes(x = WetWeight, fill = Trt)) +
+  geom_histogram() +
+  facet_grid(DaysAlive ~ ., switch = "y") +
+  labs(x = "Snail Weight (g)", y = "Number of Days Alive", title = "Common Periwinkle Survival vs. Size") +
+  scale_fill_manual(name = "Treatment", labels = "Cold", values = "dodgerblue") +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(),
