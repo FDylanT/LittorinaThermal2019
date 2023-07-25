@@ -7,13 +7,13 @@ editor_options:
   chunk_output_type: console
 ---
 
-setwd("~/Repos/LittorinaThermal2019")
-
 ## Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+
+setwd("~/Desktop/Repos/LittorinaThermal2019")
 ```
 
 ## Load data
@@ -50,23 +50,27 @@ mortB23_grouped <- mortB23_ungrouped %>%
 
 ## Plot B2&3 mortality
 ```{r}
-ggplot(mortB23_grouped, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), shape = PopID, linetype = PopID, colour = Trt)) +
+ggplot(mortB23_grouped, aes(x = Time_hrs, y = Percent_Surv, group = interaction(PopID, Trt), linetype = PopID, fill = interaction(PopID, Trt), alpha = PopID, colour = Trt, shape = Trt)) +
   geom_line() +
-  geom_point() +
-  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 2.5) +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), linetype = "solid", width = 2.5, alpha = 0.5) +
+  geom_point(size = 2) +
   labs(x = "Hours", y = "Percent Survival") +
   ylim(0, 1) +
   scale_x_continuous(breaks = c(0, 24, 48)) +
-  scale_shape_manual(name = "Population", labels = c("Northern", "Southern"), values = c(19, 1)) +
-  scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
-  scale_colour_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("orangered", "black", "dodgerblue")) +
-  guides(shape = guide_legend(order = 1), linetype = guide_legend(order = 1)) +
+  scale_linetype_manual(name = "Population", labels = c("Northern", "Southern"), values = c("solid", "22"), guide = "none") +
+  scale_fill_manual(values = c("firebrick3", "white", "black", "white", "dodgerblue2", "white"), guide = "none") +
+  scale_alpha_manual(name = "Population", labels = c("Northern", "Southern"), values = c(1, 1)) +
+  scale_colour_manual(name = "Treatment", labels = c("Heat", "Ambient", "Cold"), values = c("firebrick3", "black", "dodgerblue2")) +
+  scale_shape_manual(values = c(24, 21, 22), guide = "none") +
+  guides(alpha = guide_legend(order = 1, override.aes = list(linetype = c("solid", "22"), shape = c(21, 21), fill = c("black", "white"))),
+         colour = guide_legend(order = 2, override.aes = list(linetype = c(NA, NA, NA), shape = c(17, 19, 15)))) +
   facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"),
         strip.text = element_text(face = "italic"))
+
+ggsave("Fig4.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
 ```
 
 ## Plot by individual block
@@ -149,32 +153,37 @@ ggplot(mortB23_24, aes(x = Trt, y = Percent_Surv, linetype = PopID, colour = Pop
   scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
   scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
   facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"),
-        strip.text = element_text(face = "italic"))
+  theme_bw() +
+  theme(strip.text = element_text(face = "italic"))
 
 mortB23_48 <- mortB23_grouped %>%
   filter(Trt == "HS" | Trt == "CS") %>%
   mutate(Trt = factor(Trt, levels = c("CS", "HS"))) %>%
   filter(Time_hrs == 48)
 
-ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, linetype = PopID, colour = PopID, group = PopID)) +
-  geom_point() +
+# CovGE_text <- data.frame(
+#   label = c(-0.010, -0.750, -0.995),
+#   Spp   = c("LL", "LO", "LS")
+# )
+
+ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, group = PopID, linetype = PopID, fill = PopID)) +
   geom_line() +
-  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), width = 0.1) +
+  geom_errorbar(aes(ymin = Percent_Surv - StdErr, ymax = Percent_Surv + StdErr), linetype = "solid", width = 0.1, alpha = 0.5) +
+  geom_point(shape = 21, size = 2) +
+  #geom_text(data = CovGE_text, aes(x = -Inf, y = -Inf, label = label), hjust = -2.4, vjust = -26.5, inherit.aes = FALSE) +
+  annotate("text", label = expression("Cov"[GE]*" ="), x = 1.1, y = 0.88) +
   ylim(0, 1) +
   labs(x = "Environment", y = "Percent Survival") +
   scale_x_discrete(labels = c("Cold", "Hot")) +
   scale_linetype_discrete(name = "Population", labels = c("Northern", "Southern")) +
-  scale_colour_manual(name = "Population", labels = c("Northern", "Southern"), values = c("#7CAE00", "#C77CFF")) +
+  scale_fill_manual(name = "Population", labels = c("Northern", "Southern"), values = c("black", "white")) +
   facet_grid(. ~ Spp, labeller = labeller(Spp = c(LL = "L. littorea", LO = "L. obtusata", LS = "L. saxatilis"))) +
+  theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        axis.line = element_line(colour = "black"),
         strip.text = element_text(face = "italic"))
+
+ggsave("Fig5_2.5.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
 ```
 
 ## Plot size vs. mortality
