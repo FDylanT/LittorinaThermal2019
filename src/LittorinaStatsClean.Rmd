@@ -14,7 +14,7 @@ setwd("~/Repos/LittorinaThermal2019")
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
-library(brglm2)
+library(brglm)
 ```
 
 ## Load data
@@ -83,13 +83,6 @@ m3 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:T
 summary(m3)
 ```
 
-### In control conditions, are there overall population differences?
-```{r}
-m4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
-
-summary(m4)
-```
-
 ### In control conditions, what is the difference between populations within a spp?
 ```{r}
 # littorea
@@ -120,6 +113,13 @@ m7 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:T
 summary(m7)
 ```
 
+### In control conditions, are there overall population differences?
+```{r}
+m4 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m4)
+```
+
 ### In heat conditions, are there overall spp differences?
 ```{r}
 # littorea - obtusata
@@ -143,13 +143,6 @@ str(mortB23$Spp)
 m9 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
 
 summary(m9)
-```
-
-### In heat conditions, are there overall population differences?
-```{r}
-m10 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
-
-summary(m10)
 ```
 
 ### In heat conditions, what is the difference between populations within a spp?
@@ -182,6 +175,13 @@ m13 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:
 summary(m13)
 ```
 
+### In heat conditions, are there overall population differences?
+```{r}
+m10 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m10)
+```
+
 ### In cold conditions, are there overall spp differences?
 ```{r}
 # littorea - obtusata
@@ -205,13 +205,6 @@ str(mortB23$Spp)
 m15 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.sum, Trt = contr.treatment, Block = contr.sum))
 
 summary(m15)
-```
-
-### In cold conditions, are there overall population differences?
-```{r}
-m16 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
-
-summary(m16)
 ```
 
 ### In cold conditions, what is the difference between populations within a spp?
@@ -242,6 +235,26 @@ str(mortB23$Spp)
 m19 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.treatment, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
 
 summary(m19)
+```
+
+### In cold conditions, are there overall population differences?
+```{r}
+m16 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Trt * Block - Spp:PopID:Trt:Block - Spp:Trt:Block - Spp:PopID:Trt - Spp:PopID:Block - PopID:Trt:Block - PopID:Block - Spp:Block, data = mortB23, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Trt = contr.treatment, Block = contr.sum))
+
+summary(m16)
+```
+
+### Adjust p-values for multiple comparisons
+```{r}
+p_values <- c(0.330791, 0.276945, 0.878593, 0.233685, 0.094738, 0.017869, 0.073052, # control
+              0.050315, 0.000499, 0.078946, 0.465368, 0.642079, 0.009357, 0.318396, # heat
+              0.003700, 0.866538, 0.002304, 0.213930, 0.004683, 1.13e-05, 7.53e-05) # cold
+
+p.adjust(p_values, method = "BH") # equivalent to method = "fdr"
+
+# output: 0.40862418 0.38772300 0.87859300 0.35052750 0.16579150 0.04690612 0.15071509
+#         0.11740167 0.00349300 0.15071509 0.54292933 0.70966626 0.02807100 0.40862418
+#         0.01554000 0.87859300 0.01209600 0.34557923 0.01639050 0.00023730 0.00079065
 ```
 
 ### Alternate method
