@@ -1,0 +1,178 @@
+---
+title: "MeanTempsPlot"
+author: "Dylan Titmuss"
+date: "2023-07-25"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Load data
+```{r}
+BHBM3 <- read.table("data/NDBC/bhbm3h2010.txt", header = TRUE) %>%
+  rbind(read.table("data/NDBC/bhbm3h2011.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2012.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2013.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2014.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2015.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2016.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2017.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2018.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/bhbm3h2019.txt", header = TRUE)) %>%
+  filter(YY != "yr") %>%
+  mutate_all(function(x) as.numeric(x)) %>%
+  #replace_with_na_all(~ .x %in% c(99, 999, 9999)) %>%
+  mutate(ATMP = replace(ATMP, ATMP == 999, NA))
+
+s44013 <- read.table("data/NDBC/44013h2010.txt", header = TRUE) %>%
+  rbind(read.table("data/NDBC/44013h2011.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2012.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2013.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2014.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2015.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2016.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2017.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2018.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/44013h2019.txt", header = TRUE)) %>%
+  filter(YY != "yr") %>%
+  mutate_all(function(x) as.numeric(x)) %>%
+  mutate(ATMP = replace(ATMP, ATMP == 999, NA))
+
+NWPR1 <- read.table("data/NDBC/nwpr1h2010.txt", header = TRUE) %>%
+  rbind(read.table("data/NDBC/nwpr1h2011.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2012.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2013.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2014.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2015.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2016.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2017.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2018.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/nwpr1h2019.txt", header = TRUE)) %>%
+  filter(YY != "yr") %>%
+  mutate_all(function(x) as.numeric(x)) %>%
+  mutate(ATMP = replace(ATMP, ATMP == 999, NA))
+
+BUZM3 <- read.table("data/NDBC/buzm3h2010.txt", header = TRUE) %>%
+  rbind(read.table("data/NDBC/buzm3h2011.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2012.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2013.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2014.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2015.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2016.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2017.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2018.txt", header = TRUE)) %>%
+  rbind(read.table("data/NDBC/buzm3h2019.txt", header = TRUE)) %>%
+  filter(YY != "yr") %>%
+  mutate_all(function(x) as.numeric(x)) %>%
+  mutate(ATMP = replace(ATMP, ATMP == 999, NA))
+```
+
+## Look at data stats
+```{r}
+# colder
+mean(BHBM3$ATMP, na.rm = TRUE) # 11.78589 / 11.84503
+max(BHBM3$ATMP, na.rm = TRUE) # 38.7
+min(BHBM3$ATMP, na.rm = TRUE) # -21.9
+
+mean(s44013$ATMP, na.rm = TRUE) # 10.25655 / 10.28814
+max(s44013$ATMP, na.rm = TRUE) # 30.1 / 29.3
+min(s44013$ATMP, na.rm = TRUE) # -19.5
+
+# warmer
+mean(NWPR1$ATMP[NWPR1$YY != 2019], na.rm = TRUE) # 11.10547 / 11.12297
+max(NWPR1$ATMP[NWPR1$YY != 2019], na.rm = TRUE) # 35.5
+min(NWPR1$ATMP[NWPR1$YY != 2019], na.rm = TRUE) # -21.2
+
+mean(BUZM3$ATMP[BUZM3$YY != 2019], na.rm = TRUE) # 10.64322 / 10.89321
+max(BUZM3$ATMP[BUZM3$YY != 2019], na.rm = TRUE) # 33.5
+min(BUZM3$ATMP[BUZM3$YY != 2019], na.rm = TRUE) # -16.5
+```
+
+## Summarize data
+```{r}
+sum_BHBM3 <- BHBM3 %>%
+  group_by(MM) %>%
+  summarize(meanATMP = mean(ATMP, na.rm = TRUE),
+            maxATMP = max(ATMP, na.rm = TRUE),
+            minATMP = min(ATMP, na.rm = TRUE))
+
+sum_44013 <- s44013 %>%
+  group_by(MM) %>%
+  summarize(meanATMP = mean(ATMP, na.rm = TRUE),
+            maxATMP = max(ATMP, na.rm = TRUE),
+            minATMP = min(ATMP, na.rm = TRUE))
+
+sum_NWPR1 <- NWPR1 %>%
+  group_by(MM) %>%
+  summarize(meanATMP = mean(ATMP, na.rm = TRUE),
+            maxATMP = max(ATMP, na.rm = TRUE),
+            minATMP = min(ATMP, na.rm = TRUE))
+
+sum_BUZM3 <- BUZM3 %>%
+  group_by(MM) %>%
+  summarize(meanATMP = mean(ATMP, na.rm = TRUE),
+            maxATMP = max(ATMP, na.rm = TRUE),
+            minATMP = min(ATMP, na.rm = TRUE))
+```
+
+## Plot air temps
+```{r}
+# north station options
+ggplot() +
+  geom_point(data = sum_BHBM3, aes(x = MM, y = minATMP), col = "royalblue") +     # colder min
+  geom_point(data = sum_44013, aes(x = MM, y = minATMP), col = "mediumpurple1")
+
+ggplot() +
+  geom_point(data = sum_BHBM3, aes(x = MM, y = meanATMP), col = "royalblue") +     
+  geom_point(data = sum_44013, aes(x = MM, y = meanATMP), col = "mediumpurple1")  # colder mean
+
+ggplot() +
+  geom_point(data = sum_BHBM3, aes(x = MM, y = maxATMP), col = "royalblue") +     
+  geom_point(data = sum_44013, aes(x = MM, y = maxATMP), col = "mediumpurple1")  # colder max
+
+# south station options
+ggplot() +
+  geom_point(data = sum_NWPR1, aes(x = MM, y = maxATMP), col = "coral") +         # warmer max
+  geom_point(data = sum_BUZM3, aes(x = MM, y = maxATMP), col = "mediumvioletred")
+
+ggplot() +
+  geom_point(data = sum_NWPR1, aes(x = MM, y = meanATMP), col = "coral") +         # warmer mean
+  geom_point(data = sum_BUZM3, aes(x = MM, y = meanATMP), col = "mediumvioletred") # warmer mean @ lows
+
+ggplot() +
+  geom_point(data = sum_NWPR1, aes(x = MM, y = minATMP), col = "coral") +         
+  geom_point(data = sum_BUZM3, aes(x = MM, y = minATMP), col = "mediumvioletred") # warmer min
+```
+
+## Create manuscript plot
+```{r}
+ggplot() +
+  geom_line(data = sum_BHBM3, aes(x = MM, y = minATMP), col = "dodgerblue2") +
+  geom_line(data = sum_44013, aes(x = MM, y = meanATMP), col = "black") +
+  geom_line(data = sum_44013, aes(x = MM, y = maxATMP), col = "firebrick3") +
+  geom_line(data = sum_BUZM3, aes(x = MM, y = minATMP), col = "dodgerblue2", linetype = "22") +
+  geom_line(data = sum_BUZM3, aes(x = MM, y = meanATMP), col = "black", linetype = "22") +
+  geom_line(data = sum_NWPR1, aes(x = MM, y = maxATMP), col = "firebrick3", linetype = "22") +
+  annotate("label", label = "10-yr min: -21.9°C", col = "dodgerblue2", x = 3.75, y = -21) +
+  annotate("label", label = "10-yr max: 30.1°C", col = "firebrick3", x = 7.9, y = 25) +
+  #annotate("tile", x = 2.35, y = -2.25, width = 2.7, height = 3.5, linewidth = 0.5, linetype = "22",
+  #         fill = "white", col = "dodgerblue2") +
+  #annotate("text", label = "10-yr min: -16.5°C", col = "dodgerblue2", x = 2.35, y = -2.25) +
+  annotate("tile", x = 4.4, y = 35, width = 2.7, height = 3.5, linewidth = 0.5, linetype = "22",
+           fill = "white", col = "firebrick3") +
+  annotate("text", label = "10-yr max: 35.5°C", col = "firebrick3", x = 4.4, y = 35) +
+  scale_x_continuous(limits = c(1, 12), breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)) +
+  scale_y_continuous(breaks = c(-20, -10, 0, 10, 20, 30)) +
+  labs(x = "Month", y = "Air Temperature (°C)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+ggsave("Fig2.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
+```
