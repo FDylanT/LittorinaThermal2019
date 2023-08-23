@@ -183,7 +183,7 @@ ggplot(mortB23_48, aes(x = Trt, y = Percent_Surv, group = PopID, linetype = PopI
         panel.grid.minor = element_blank(),
         strip.text = element_text(face = "italic"))
 
-ggsave("Fig5_2.5.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
+ggsave("Fig5.3.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
 ```
 
 ## Plot size vs. mortality
