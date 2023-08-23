@@ -169,10 +169,21 @@ ggplot() +
   annotate("text", label = "10-yr max: 35.5°C", col = "firebrick3", x = 4.4, y = 35) +
   scale_x_continuous(limits = c(1, 12), breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)) +
   scale_y_continuous(breaks = c(-20, -10, 0, 10, 20, 30)) +
+  scale_alpha_manual(values = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)) +
   labs(x = "Month", y = "Air Temperature (°C)") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
 
 ggsave("Fig2.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
+
+ggplot() +
+  geom_line(data = sum_44013, aes(x = MM, y = meanATMP, linetype = "Northern"), col = "black") +
+  geom_line(data = sum_BUZM3, aes(x = MM, y = meanATMP, linetype = "Southern"), col = "black") +
+  scale_linetype_manual(values = c("solid", "22"), name = "Station") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+ggsave("Fig2.1.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
 ```
