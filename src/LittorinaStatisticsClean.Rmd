@@ -7,8 +7,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-setwd("~/Repos/LittorinaThermal2019")
-
 ## Load packages
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -19,6 +17,8 @@ library(brglm)
 
 ## Load data
 ```{r}
+setwd("~/Desktop/Repos/LittorinaThermal2019")
+
 litt <- read.csv("./data/LittorinaData.csv") %>%
   rename(Spp = Genus_Species)
 
