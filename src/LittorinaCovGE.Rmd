@@ -35,7 +35,7 @@ nat_env_factor = native environment
 
 We also need to ensure the data are formatted for the analysis. We use an ANOVA to extract estimated marginal means for each genotype and environmental mean (yi and yj in CovGE equation), which requires that fixed effects (genotype and environment) are categorical. 
 
-Finally, we'll analyze each phenotype and species differently. I've set up the code below so you can switch out names in the pipe and run it all). Because you measured the phenotype across 3 species, you should end up with 3 CovGE estimates :) 
+Finally, we'll analyze each phenotype and species differently.
 
 ```{r}
 
@@ -223,14 +223,4 @@ cov_pvalue <- sum(abs(perm_df_raw$covariance_perm) >= abs(CovGE))/(n_boot+1) # T
 cov_pvalue     
 ```
 
-Congratulations! You have estimated CovGE, 95% confidence intervals, and the P-value for your snail data. To report these results, you would say something like... 
-
-(At least for the Littorina saxatilis data):  Littorina saxatilis exhibited significant countergradient variation in percent survival (CovGE = -0.995 (C.I. -1.000 to -0.299); P-value = 0.01). 
-
-You can fill in the following table with results from these analyses: 
-
-| Species | CovGE | 95% CI | P-value |
-| --- | --- | --- | --- |
-| Littorina littorea | -0.010 | -0.265 - 0.242 | 0.985 |
-| Littorina obtusata | -0.750 | -0.982 - -0.001 | 0.166 |
-| Littorina saxatilis | -0.995 | -1.000 - -0.299 | 0.014 |
+Congratulations! You have estimated CovGE, 95% confidence intervals, and the P-value for your snail data.
