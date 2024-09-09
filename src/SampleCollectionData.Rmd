@@ -1,0 +1,58 @@
+---
+title: "Sample Collection Envt"
+author: "Dylan Titmuss"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Load packages
+```{r}
+library(tidyverse)
+library(naniar)
+```
+
+## Load data
+```{r}
+setwd("~/Desktop/LittorinaThermal2019")
+
+south <- read_table("~/data/NDBC/nwpr1h2019.txt")
+north19 <- read_table("~/data/NDBC/bhbm3h2019.txt") # no water temp data
+north20 <- read_table("~/data/NDBC/bhbm3h2020.txt")
+```
+
+## Filter & summarise data
+```{r}
+south1 <- south %>% filter(MM == "06",
+                           DD >= "20" & DD <= "26") # week prior to collection
+south1 <- south1 %>% mutate(across(everything(), as.numeric))
+south1 <- south1 %>% replace_with_na_all(condition = ~.x %in% c(99, 999))
+# south1 <- south1 %>% filter(hh >= 5 & hh <= 16) # starting from ~sunrise 05:12
+mean(south1$ATMP, na.rm = TRUE)
+mean(south1$WTMP, na.rm = TRUE)
+
+south2 <- south %>% filter(MM == "06",
+                           DD >= "24" & DD <= "30") # week prior to collection
+south2 <- south2 %>% mutate(across(everything(), as.numeric))
+south2 <- south2 %>% replace_with_na_all(condition = ~.x %in% c(99, 999))
+# south2 <- south2 %>% filter(hh >= 5 & hh <= 16) # starting from ~sunrise 05:13
+mean(south2$ATMP, na.rm = TRUE)
+mean(south2$WTMP, na.rm = TRUE)
+
+north19 <- north19 %>% filter((MM == "06" & DD >= "27") |
+                          (MM == "07" & DD <= "03")) # week prior to collection
+north19 <- north19 %>% mutate(across(everything(), as.numeric))
+north19 <- north19 %>% replace_with_na_all(condition = ~.x %in% c(99, 999))
+# north19 <- north19 %>% filter(hh >= 5 & hh <= 16) # starting from ~sunrise 05:11
+mean(north19$ATMP, na.rm = TRUE)
+mean(north19$WTMP, na.rm = TRUE) # all NA
+
+north20 <- north20 %>% filter((MM == "06" & DD >= "27") |
+                            (MM == "07" & DD <= "03")) # week prior to collection
+north20 <- north20 %>% mutate(across(everything(), as.numeric))
+north20 <- north20 %>% replace_with_na_all(condition = ~.x %in% c(99, 999))
+# north20 <- north20 %>% filter(hh >= 5 & hh <= 16)
+mean(north20$ATMP, na.rm = TRUE)
+mean(north20$WTMP, na.rm = TRUE)
+```
