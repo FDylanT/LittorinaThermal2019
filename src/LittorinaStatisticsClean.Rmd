@@ -256,36 +256,3 @@ p.adjust(p_values, method = "BH") # equivalent to method = "fdr"
 #         0.11740167 0.00349300 0.15071509 0.54292933 0.70966626 0.02807100 0.40862418
 #         0.01554000 0.87859300 0.01209600 0.34557923 0.01639050 0.00023730 0.00079065
 ```
-
-### Alternate method
-
-litt_HS <- mortB23 %>%
-  filter(Spp == "littorina_littorea") %>%
-  filter(Trt == "HS")
-
-m11.1 <- brglm(cbind(DaysAlive, DaysDead) ~ PopID * Block, data = litt_HS, family = binomial(link = "logit"), contrasts = list(PopID = contr.treatment, Block = contr.sum))
-
-summary(m11.1)
-
-CS <- mortB23 %>%
-  filter(Trt == "CS")
-
-m16.1 <- brglm(cbind(DaysAlive, DaysDead) ~ Spp * PopID * Block, data = CS, family = binomial(link = "logit"), contrasts = list(Spp = contr.sum, PopID = contr.treatment, Block = contr.sum))
-
-summary(m16.1)
-
-litt_CS <- mortB23 %>%
-  filter(Spp == "littorina_littorea") %>%
-  filter(Trt == "CS")
-
-m17.1 <- brglm(cbind(DaysAlive, DaysDead) ~ PopID * Block, data = litt_CS, family = binomial(link = "logit"), contrasts = list(PopID = contr.treatment, Block = contr.sum))
-
-summary(m17.1)
-
-obt_CS <- mortB23 %>%
-  filter(Spp == "littorina_obtusata") %>%
-  filter(Trt == "CS")
-
-m18.1 <- brglm(cbind(DaysAlive, DaysDead) ~ PopID * Block, data = obt_CS, family = binomial(link = "logit"), contrasts = list(PopID = contr.treatment, Block = contr.sum))
-
-summary(m18.1)
