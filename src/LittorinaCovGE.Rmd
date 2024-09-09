@@ -141,8 +141,8 @@ For this step, I am going to use imported functions that do the same thing as sh
 "cov.function" function calculates CovGE
 
 ```{r}
-n_boot <- 999 # You probably want to run 999 runs when you run this for your thesis. It takes a lot of time though so I've shortened it for time.
-balanced = TRUE   # Don't worry about this - your data is fine, but this would be in case your data were unbalanced (different numbers of genotypes)
+n_boot <- 999
+balanced = TRUE   # This would be in case your data were unbalanced (different numbers of genotypes)
 
 boot_dat_raw = boot_df_raw = data.frame()
     
