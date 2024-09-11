@@ -187,3 +187,30 @@ ggplot() +
 
 ggsave("Fig2.1.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 6.5, height = 4.3, units = "in", dpi = 600, bg = "#ffffff")
 ```
+
+## Map of sample sites
+```{r}
+RI_lat <- 41.506944
+RI_lon <- -71.088889
+MA_lat <- 42.419444
+MA_lon <- -70.906944
+
+sf_use_s2(FALSE)
+
+# get Massachusetts outline
+mass <- read_sf("/Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/gshhg-shp-2.3.7/GSHHS_shp/f/GSHHS_f_L1.shp") %>%
+  st_make_valid() %>%
+  st_crop(xmin = -72, xmax = -69, ymin = 41, ymax = 43)
+
+ggplot() +
+  geom_sf(data = mass) +
+  geom_point(aes(x = RI_lon, y = RI_lat), size = 2) +
+  geom_point(aes(x = MA_lon, y = MA_lat), shape = 17, size = 2) +
+  scale_x_continuous(breaks = c(-71, -70.5, -70)) +
+  scale_y_continuous(breaks = c(41.5, 42, 42.5)) +
+  coord_sf(xlim = c(-71.3, -69.85), ylim = c(41.3, 42.6), expand = FALSE) +
+  theme_linedraw() +
+  theme(axis.title = element_blank())
+
+ggsave("Fig2a.png", path = "~/Desktop/Repos/LittorinaThermal2019/results", width = 2.15, height = 2.25, units = "in", dpi = 600)
+```
